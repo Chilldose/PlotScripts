@@ -18,11 +18,11 @@ This should initiate the plotting script and when finished, should reward you wi
 
 There are several possible args you can pass,
 
-| Arg       | Type           | mandatory  | description |
-| ------------- |:-------------:| -----:|
-| --config, --file, --c, --conf      | path/str | yes | The path to the config file |
-| --show    | bool      |   no | If False the script will not show any html plots, default is True |
-| --save, --s | bool     |    no | Bool if you want to save the plots or not, default is True |
+| Arg                                | Type          | mandatory  | description                                                       |
+| ---------------------------------- |:-------------:| ----------:| ----------------------------------------------------------------- |
+| --config, --file, --c, --conf      | path/str      | yes        | The path to the config file                                       |
+| --show                             | bool          |   no       | If False the script will not show any html plots, default is True |
+| --save, --s                        | bool          |    no      | Bool if you want to save the plots or not, default is True        |
 
 # The Config file
 In order to plot anything you need to have a Config file. These files are YAML styled files. Some examples can be found in the CONFIGS folder.
