@@ -137,6 +137,40 @@ in you config file. THe subparamerts:
 
 If you follow this rules the script should be able to interpret your data.
 
+A readable ASCII file (with the above config) would be:
+
+<pre>
+
+# Measurement file:
+ # Project: HPK 6 inch 2018
+ # Sensor Type: 2S
+ # ID: VPX28442_11_2S
+ # Operator: Dominic
+ # Date: Wed Feb 27 08:48:27 2019
+
+
+# implant_width: 22
+# implant_length: 0
+# metal_width: 32
+# Campaign: Hamamatsu 6inch 2S
+# Creator: Dominic Bloech 03.12.2018
+# type: p-type
+# pitch: 90
+# metal_length: 49504
+# thickness: 240
+
+
+Pad                     Istrip                  Rpoly                   Idark                   Cac            
+#                       current[A]              res[Ohm]                current[A]              cap[F]
+1.0                     --                      --                      --                      --               
+2.0                     -1.66724566667e-10      1895982.8106            -2.31596666667e-07      1.48568333333e-10     
+3.0                     -1.599834e-10           1889915.74685           -2.30320333333e-07      1.48593666667e-10                
+4.0                     -1.48145666667e-10      1892659.50326           -2.29964666667e-07      1.48617666667e-10         
+
+
+
+</pre>
+
 
 # The measurement plugins
 The measurement plugins located in the analysis_scripts folder need to be python classes.
