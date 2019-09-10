@@ -1,4 +1,5 @@
 .idea\**
+CONFIGS/**
 *.pyc
 *.txt
 *.png
