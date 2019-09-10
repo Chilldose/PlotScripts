@@ -116,19 +116,19 @@ In principle such a file looks like this:
 
 
 # The measurements files
-If you have json or YAML files you do not need specila treatment here, just state it correctly in the config file.
+If you have json or YAML files you do not need special treatment here, just state it correctly in the config file.
 
 If you have ASCII styled files you need to include the parameters
 
 <pre>
 ASCII_file_specs: # The specifications for the ascii file type measurements files
-  header_lines: 8
-  measurement_description: 9
-  units_line: 9
-  data_start: 10
+    header_lines: 18
+    measurement_description: 20
+    units_line: 21
+    data_start: 22
 </pre>
 
-in you config file. THe subparamerts:
+in you config file. The sub-parameters:
 
 + header_lines defines the length of the header in lines.
 + measurement_description the line with the name of the measurements
@@ -243,9 +243,9 @@ As a return the framework wants a least a dictionary with the entry "All", in wh
 The framework has lots of subroutines which can simplify your workflow. These are located
 in the folders "forge". It tried to give every function a Docstring but sometimes I am lacy but you will figure out what it does.
 
-The utilities script gives you some basic non plot specific functions, normally you will not need them
-The tools script gives you tools how to plot or manipulate data
-The specialPlots script includes all special plot scripts, like violin, Histogram etc. you can add some as well
++ The utilities script gives you some basic non plot specific functions, normally you will not need them
++ The tools script gives you tools how to plot or manipulate data
++ The specialPlots script includes all special plot scripts, like violin, Histogram etc. you can add some as well
 
 
 The most important functions are:
