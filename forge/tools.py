@@ -293,17 +293,6 @@ def holoplot(plotType, df_list, configs, xdata, ydata, **addConfigs):
 
     return finalPlot
 
-
-
-def EngUnit_funct(value): # Holoview only allows functions not classes
-    #print(EngNumber(value))
-    return lambda x: str(EngNumber(value))
-
-
-def EngUnit_representation(plot, xaxis=False, yaxis=False):
-    """Configures the plot to use enginerring notation or not on x and y axes"""
-    return plot.opts(xformatter=EngUnit_funct if xaxis else None, yformatter=EngUnit_funct if yaxis else None)
-
 def relabelPlot(plot, label):
     return plot.relabel(label)
 
