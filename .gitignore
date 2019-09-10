@@ -1,0 +1,9 @@
+.idea\**
+*.pyc
+*.txt
+*.png
+*.pdf
+*.html
+*.xml
+*.iml
+*.log
