@@ -8,3 +8,5 @@ CONFIGS/**
 *.xml
 *.iml
 *.log
+*.nbc
+*.nbi

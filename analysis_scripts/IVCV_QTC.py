@@ -6,7 +6,7 @@ import holoviews as hv
 from holoviews import opts
 hv.extension('matplotlib')
 
-from ..forge.tools import customize_plot, EngUnit_representation, holoplot, convert_to_df, config_layout
+from ..forge.tools import customize_plot, holoplot, convert_to_df, config_layout
 from ..forge.tools import twiny, relabelPlot
 from ..forge.tools import plot_all_measurements, convert_to_EngUnits
 from ..forge.specialPlots import dospecialPlots
@@ -21,7 +21,7 @@ class IVCV_QTC:
         self.config = configs
         self.df = []
         self.basePlots = None
-        self.PlotDict = {}
+        self.PlotDict = {"Name": "IVCV"}
         if "capacitance" in self.data[self.data["keys"][0]]["data"]:
             self.data["columns"].insert(3,"1C2") # because we are adding it later on
         self.measurements = self.data["columns"]

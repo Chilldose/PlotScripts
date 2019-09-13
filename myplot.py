@@ -10,6 +10,9 @@ from multiprocessing import Pool
 import traceback
 import holoviews as hv
 from bokeh.io import show
+from pathlib import Path
+from copy import deepcopy
+from time import sleep
 hv.extension('matplotlib', 'bokeh')
 
 from bokeh.io import save
@@ -21,7 +24,7 @@ class PlottingMain:
     def __init__(self):
 
         self.data = {}
-        self.rootdir = os.getcwd()
+        self.rootdir = Path(__file__).parent.resolve()
         self.plotObjects = []
 
 
@@ -78,7 +81,7 @@ class PlottingMain:
             if isinstance(self.config["Analysis"], list):
                 # All plot scripts must return the plot objects, in which all plots are included. Saving of plots will
                 # be done via the main script.
-                config_data = [(analysis, analysis_obj, self.data.copy(), self.config.copy(), self.log) for analysis, analysis_obj in self.plugins.items()]
+                config_data = [(analysis, analysis_obj, deepcopy(self.data), self.config.copy(), self.log) for analysis, analysis_obj in self.plugins.items()]
                 # Todo: multiporcess the analysis
                 #self.plotObjects = self.pool.starmap(self.start_analysis, config_data)
                 self.plotObjects = []
@@ -95,7 +98,8 @@ class PlottingMain:
         for plot in self.plotObjects:
             if "All" in plot:
                 finalfig = hv.render(plot["All"], backend='bokeh')
-                show(finalfig)
+                #show(finalfig)
+                sleep(1.)
             else:
                 self.log.info("No 'all' plot defined, skipping...")
 
@@ -114,12 +118,20 @@ class PlottingMain:
                 if "All" in plot:
                     self.log.info("Saving all subplots from the 'All' plot...")
                     Allplots = plot["All"]
-                    plotslist_tuple = Allplots.keys()
-                    for path in plotslist_tuple:
-                        plots = Allplots
-                        for attr in path:
-                            plots = getattr(plots, attr)
-                        save_plot("_".join(path), plots, save_dir, save_as=self.config["Save_as"])
+                    # todo: saving of table not working with keys!!!
+                    try:
+                        plotslist_tuple = Allplots.keys()
+                        for path in plotslist_tuple:
+                            plots = Allplots
+                            for attr in path:
+                                plots = getattr(plots, attr)
+                            try:
+                                label = plots._label
+                            except:
+                                label = "_".join(path)
+                            save_plot(label, plots, save_dir, save_as=self.config["Save_as"])
+                    except:
+                        save_plot(Allplots.group, Allplots, save_dir, save_as=self.config["Save_as"])
 
                 else:
                     self.log.info("Saving all subplots from the 'All' not possible due to missing key...")
@@ -128,7 +140,7 @@ class PlottingMain:
                         save_plot(key, subplot, save_dir)
                 try:
                     self.log.info("Export the 'All' html plot...")
-                    save_plot("All plots", plot["All"], save_dir)
+                    save_plot(plot.get("Name", "All Plots"), plot["All"], save_dir)
                     #save(hv.render(plot["All"], backend='bokeh'), os.path.join(save_dir,"{}.html".format("All plots")))
                 except:
                     self.log.warning("'All plots' could not be saved....")

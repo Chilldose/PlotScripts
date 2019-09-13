@@ -24,7 +24,7 @@ class Stripscan:
         self.measurements = self.data["columns"]
         padidx = self.measurements.index("Pad")
         del self.measurements[padidx]
-        self.PlotDict = {}
+        self.PlotDict = {"Name": "Stripscan"}
 
         #hv.renderer('bokeh').theme = "dark_minimal"
 

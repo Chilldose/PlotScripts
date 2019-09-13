@@ -9,7 +9,6 @@ import holoviews as hv
 from holoviews import opts
 import numpy as np
 hv.extension('bokeh', 'matplotlib')
-from .engineering_notation import EngUnit, EngNumber
 import pandas as pd
 from bokeh.models import LinearAxis, Range1d
 from bokeh.io import export_svgs, export_png
