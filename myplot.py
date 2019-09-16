@@ -98,7 +98,7 @@ class PlottingMain:
         for plot in self.plotObjects:
             if "All" in plot:
                 finalfig = hv.render(plot["All"], backend='bokeh')
-                #show(finalfig)
+                show(finalfig)
                 sleep(1.)
             else:
                 self.log.info("No 'all' plot defined, skipping...")

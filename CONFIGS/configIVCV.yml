@@ -2,7 +2,8 @@
 
 
   Files: # The files which are plottet together
-    - Filepath
+      - C:\Users\dbloech\PycharmProjects\Doktorat\PlotScripts\testdata\IVC_VPX28442_2S_04.txt
+      - C:\Users\dbloech\PycharmProjects\Doktorat\PlotScripts\testdata\IVC_VPX28442_2S_11.txt
 
   Filetype: ASCII # Other options are json
 
@@ -143,5 +144,7 @@
               #xlabel: voltage [V]
               ylabel: 1/c^2 [arb. units]
               shared_axes: False
+              ylim: !!python/tuple [0, 0.08]
+              #xlim: !!python/tuple [0, 500]
 
 
