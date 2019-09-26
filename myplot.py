@@ -93,7 +93,7 @@ class PlottingMain:
 
     def show_results(self):
         """This function shows all results form all analyses"""
-        hv.renderer('matplotlib')
+        hv.renderer('bokeh')
         self.log.info("Showing the 'all' plot from every analysis...")
         for plot in self.plotObjects:
             if "All" in plot:

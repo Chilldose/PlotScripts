@@ -46,7 +46,6 @@
   # These options are entirely up to you and what you need in your analysis
 
   bad_strip_detection:
-
       General: # Options common to all plots
           fontsize: {'title': 28, 'labels': 24, 'xticks': 24, 'yticks': 24, 'legend': 11}
           width: 1500

@@ -2,8 +2,8 @@
 
 
   Files: # The files which are plottet together
-      - C:\Users\dbloech\PycharmProjects\Doktorat\PlotScripts\testdata\IVC_VPX28442_2S_04.txt
-      - C:\Users\dbloech\PycharmProjects\Doktorat\PlotScripts\testdata\IVC_VPX28442_2S_11.txt
+      - File1.dat
+      - File2.dat
 
   Filetype: ASCII # Other options are json
 
@@ -13,7 +13,6 @@
     - html
     #- png
     #- svg
-    #- pdf # does not work correctly
 
   Analysis:
     - IVCV_QTC # The type of analysis, which will be performed
