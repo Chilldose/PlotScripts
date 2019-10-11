@@ -12,8 +12,6 @@ import traceback
 import re
 import importlib
 
-
-
 l = logging.getLogger("utilities")
 
 
@@ -40,6 +38,7 @@ def load_plugins(settings, rootdir):
     to_ignore = ["__init__", "__pycache__"]
     all_measurement_functions = os.listdir(os.path.join(rootdir, "analysis_scripts"))
     all_measurement_functions = list(set([modules.split(".")[0] for modules in all_measurement_functions]))
+
     all_plugins = {}
 
     l.info("All plugin scripts found: " + str(all_measurement_functions) + ".")
@@ -47,7 +46,7 @@ def load_plugins(settings, rootdir):
     # import all modules specified in the measurement order, so not all are loaded
     for modules in settings["Analysis"]:
         if modules in all_measurement_functions:
-            all_plugins.update({modules: importlib.import_module("PlotScripts.analysis_scripts." + modules)})
+            all_plugins.update({modules: importlib.import_module("analysis_scripts." + modules)})
             l.info("Imported module: {}".format(modules))
         else:
             if modules not in to_ignore:
@@ -95,14 +94,15 @@ def exception_handler(exctype, value, tb):
     # Pass on exception
     sys.__excepthook__(exctype, value, tb)
 
-def parse_args():
+def parse_args(config = None):
 
     import argparse
+    #parent_parser = argparse.ArgumentParser(add_help=False)
     parser = argparse.ArgumentParser()
     parser.add_argument("--file", "--f", "--config", "--con", "--c", help="The init file with all the configs as a yaml styled file")
     parser.add_argument("--show", help="Show the plots or not, default is True", action="store_false", default=True)
     parser.add_argument("--save", "--s", help="Save the plots, default is False", action="store_true", default=False)
-    args = parser.parse_args()
+    args = parser.parse_args(config)
 
     return args
 

@@ -4,8 +4,8 @@ This scripts takes arguments parsed by the user, usually a config file"""
 import logging
 import sys, os
 
-from forge.utilities import parse_args, LogFile, load_yaml, exception_handler, sanatise_units, sanatise_measurement
-from forge.utilities import load_plugins
+from .forge.utilities import parse_args, LogFile, load_yaml, exception_handler, sanatise_units, sanatise_measurement
+from .forge.utilities import load_plugins
 from multiprocessing import Pool
 import traceback
 import holoviews as hv
@@ -13,15 +13,18 @@ from bokeh.io import show
 from pathlib import Path
 from copy import deepcopy
 from time import sleep
-hv.extension('matplotlib', 'bokeh')
+hv.extension('bokeh')
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+import importlib
 
 from bokeh.io import save
 
-from forge.tools import read_in_ASCII_measurement_files, read_in_JSON_measurement_files, save_plot
+from .forge.tools import read_in_ASCII_measurement_files, read_in_JSON_measurement_files, save_plot
 
 class PlottingMain:
 
-    def __init__(self):
+    def __init__(self, configs = None):
+        """Configs must be a list representation of valid args!"""
 
         self.data = {}
         self.rootdir = Path(__file__).parent.resolve()
@@ -31,14 +34,18 @@ class PlottingMain:
         # Initialize a logfile class
         self.logFile = LogFile(path="LogFiles\LoggerConfig.yml")
 
-        self.log = logging.getLogger("main")
+        self.log = logging.getLogger("mainPlotting")
 
         # Init Except hook
         #sys.excepthook = exception_handler
 
-        # Get the args parsed to this script
-        self.args = parse_args()
-        self.log.critical("Arguments parsed: {}".format(self.args))
+        # Get the args parsed to this script if necessary
+        if not configs:
+            self.args = parse_args()
+            self.log.critical("Arguments parsed: {}".format(self.args))
+        else:
+            self.args = parse_args(configs)
+            self.log.critical("Arguments parsed: {}".format(self.args))
 
         # Load the config to a dictionary
         self.config = load_yaml(self.args.file)
@@ -68,11 +75,11 @@ class PlottingMain:
 
     def run(self):
         """Runs the script"""
-        plot.plot()
+        self.plot()
         if self.args.show:
-            plot.show_results()
+            self.show_results()
         if self.args.save:
-            plot.save_to()
+            self.save_to()
 
 
     def plot(self):
@@ -90,6 +97,13 @@ class PlottingMain:
 
             else:
                 self.log.error("Data type of analysis parameter must be list of str.")
+
+    def temp_html_output(self, plot_object):
+        """This function plots a object, by saving the plot as html file in a temporary file and returning the path
+        to the file"""
+        #finalfig = hv.render(plot_object, backend='bokeh')
+        save_plot("temp_plot", plot_object, self.rootdir, save_as="html")
+        return os.path.join(self.rootdir, "html", "temp_plot.html")
 
     def show_results(self):
         """This function shows all results form all analyses"""

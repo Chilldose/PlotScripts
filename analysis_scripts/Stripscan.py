@@ -5,11 +5,11 @@ import logging
 import holoviews as hv
 from holoviews import opts
 
-hv.extension('bokeh','matplotlib')
+hv.extension('bokeh')
 
-from ..forge.tools import convert_to_df
-from ..forge.tools import plot_all_measurements, convert_to_EngUnits
-from ..forge.specialPlots import *
+from forge.tools import convert_to_df
+from forge.tools import plot_all_measurements, convert_to_EngUnits
+from forge.specialPlots import *
 
 
 class Stripscan:

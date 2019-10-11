@@ -11,7 +11,7 @@ import numpy as np
 from time import time
 from numba import jit
 from scipy.stats import norm, stats
-from ..forge.engineering_notation import EngNumber
+from forge.engineering_notation import EngNumber
 
 
 
