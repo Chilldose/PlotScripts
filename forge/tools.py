@@ -8,11 +8,13 @@ import re
 import holoviews as hv
 from holoviews import opts
 import numpy as np
-hv.extension('bokeh', 'matplotlib')
+hv.extension('bokeh')
 import pandas as pd
 from bokeh.models import LinearAxis, Range1d
 from bokeh.io import export_svgs, export_png
 from bokeh.io import save
+import json, yaml
+from copy import deepcopy
 try:
     import pdfkit
 except:
@@ -44,29 +46,33 @@ def convert_to_EngUnits(data, dataType, unit="nano"):
 
     for file in data["keys"]:
         # Find current order of magnitude
-        idx = data[file]["measurements"].index(dataType)
-        if len(data[file]["units"][idx]) > 1:
-            oldunit = data[file]["units"][idx][0] # The first should be the correct magnitude
-        else: oldunit = ""
+        if dataType in data[file]["measurements"]:
+            idx = data[file]["measurements"].index(dataType)
+            if len(data[file]["units"][idx]) > 1:
+                oldunit = data[file]["units"][idx][0] # The first should be the correct magnitude
+            else: oldunit = ""
 
-        # find unit to convert to old and new
-        old_unit_key = ("","")
-        for keys in engUnits.keys():
-            if unit in keys:
-                to_convert = keys
-            if oldunit in keys:
-                old_unit_key = keys
+            # find unit to convert to old and new
+            old_unit_key = ("","")
+            for keys in engUnits.keys():
+                if unit in keys:
+                    to_convert = keys
+                if oldunit in keys:
+                    old_unit_key = keys
 
-        # Calc difference between the units
-        factor = engUnits[old_unit_key]/engUnits[to_convert]
-        data[file]["data"][dataType] = data[file]["data"][dataType]*factor
+            # Calc difference between the units
+            factor = engUnits[old_unit_key]/engUnits[to_convert]
+            data[file]["data"][dataType] = data[file]["data"][dataType]*factor
 
-        if len(data[file]["units"][idx]) > 1:
-            # Todo: error in units if several conversions are made!!!!
-            # Convert the units to the correct representation
-            data[file]["units"][idx] = to_convert[0] + data[file]["units"][idx][:]
+            if len(data[file]["units"][idx]) > 1:
+                # Todo: error in units if several conversions are made!!!!
+                # Convert the units to the correct representation
+                data[file]["units"][idx] = to_convert[0] + data[file]["units"][idx][:]
+            else:
+                data[file]["units"][idx] = to_convert[0] + data[file]["units"][idx]
         else:
-            data[file]["units"][idx] = to_convert[0] + data[file]["units"][idx]
+            log.warning("Conversion of units could not be done due to missing data! Data set: {}".format(file))
+            return data
 
     # Convert the all df as well
     factor = engUnits[old_unit_key] / engUnits[to_convert]
@@ -90,7 +96,7 @@ def convert_to_EngUnits(data, dataType, unit="nano"):
 def SimplePlot(data, configs, measurement_to_plot, xaxis_measurement, analysis_name):
     """
     Plots a panda data frames together
-    :param data: the data structure for one meausurement
+    :param data: the data structure for one measurement
     :param configs: the configs dict
     :param measurement_to_plot: y data
     :param xaxis_measurement: name of the meausurement which define the xaxsis, x data
@@ -100,15 +106,15 @@ def SimplePlot(data, configs, measurement_to_plot, xaxis_measurement, analysis_n
 
     # Generate a plot with all data plotted
     log.debug("Started plotting {} curve...".format(measurement_to_plot))
-    return holoplot(measurement_to_plot, data, configs[analysis_name], xaxis_measurement, measurement_to_plot)
+    return holoplot(measurement_to_plot, data, configs.get(analysis_name, {}), xaxis_measurement, measurement_to_plot)
 
 def plot_all_measurements(data, config, xaxis_measurement, analysis_name, do_not_plot=()):
     """
-    Simply plots all available measurements from data frames against one xaxsis.
+    Simply plots all available measurements from data frames against one xaxsis measurement.
     The data structure needs a entry for 'measurements' containing a list of all measurements
     :param data: The data structure
     :param config: The Configs dictionary
-    :param xaxis_measurement: The measuremnt against all others are plotted
+    :param xaxis_measurement: The measurement against all others are plotted
     :param analysis_name: The analysis name out of which the configs for the individual plots are extracted
     :param do_not_plot: List/tuple of plots which should not be plotted
     :return: Holoviews Plot object
@@ -123,7 +129,7 @@ def plot_all_measurements(data, config, xaxis_measurement, analysis_name, do_not
                 finalPlot = SimplePlot(data, config, measurement, xaxis_measurement, analysis_name)
 
 
-    return config_layout(finalPlot, **config[analysis_name].get("Layout", {}))
+    return config_layout(finalPlot, **config.get(analysis_name, {}).get("Layout", {}))
 
 def save_plot(name, subplot, save_dir, save_as="default"):
     """Saves a plot object"""
@@ -266,14 +272,17 @@ def holoplot(plotType, df_list, configs, xdata, ydata, **addConfigs):
         log.info("Generating plot {} in Style {}".format(plotType, type))
         for key in df_list["keys"]:
             if hasattr(hv,type):
-                log.debug("Generating plot {} for {}".format(key, plotType))
-                # get labels from the configs
-                ylabel = "{} [{}]".format(ydata, df_list[key]["units"][df_list[key]["measurements"].index(ydata)])
-                xlabel = "{} [{}]".format(xdata, df_list[key]["units"][df_list[key]["measurements"].index(xdata)])
-                if plot:
-                    plot *= getattr(hv, type)(df_list[key]["data"], xdata, ydata, label=key)
-                else: plot = getattr(hv, type)(df_list[key]["data"], xdata, ydata, label=key)
-                plot.opts(xlabel=xlabel, ylabel=ylabel)
+                if ydata in df_list[key]["data"]:
+                    log.debug("Generating plot {} for {}".format(key, plotType))
+                    # get labels from the configs
+                    ylabel = "{} [{}]".format(ydata, df_list[key]["units"][df_list[key]["measurements"].index(ydata)])
+                    xlabel = "{} [{}]".format(xdata, df_list[key]["units"][df_list[key]["measurements"].index(xdata)])
+                    if plot:
+                        plot *= getattr(hv, type)(df_list[key]["data"], xdata, ydata, label=key)
+                    else: plot = getattr(hv, type)(df_list[key]["data"], xdata, ydata, label=key)
+                    plot.opts(xlabel=xlabel, ylabel=ylabel)
+                else:
+                    log.warning("The data key: {} is not present in dataset {}. Skipping this particular plot.".format(ydata, key))
             else:
                 log.error("The plot type {} is not part of Holoviews.".format(type))
         log.debug("Generated plot: {} of type {}".format(plot, type))
@@ -344,7 +353,7 @@ def read_in_ASCII_measurement_files(filepathes, settings):
 
     try:
         for files in filepathes:
-            filename = os.path.basename(str(files)).split(".")[0][4:]
+            filename = os.path.basename(str(files)).split(".")[0]
             log.info("Try reading ASCII file: {}".format(filename))
             current_file = files
             with open(os.path.normpath(files)) as f:
@@ -409,6 +418,47 @@ def parse_file_data(filecontent, settings):
                 filenum += 1
             new_name = meas+"_{}".format(filenum)
             log.critical("Name {} already exists. Data array will be renamed to {}".format(meas, new_name))
+            data_dict.update({new_name: np.array(data_lists[i], dtype=np.float32)})
+            # Adapt the measurements name as well
+            parsed_obj[0][i] = new_name
 
     return_dict = {"data": data_dict, "header": header, "measurements": parsed_obj[0][:len(parsed_data[0])], "units": parsed_obj[1][:len(parsed_data[0])]}
     return return_dict
+
+
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+           return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
+
+def save_dict_as_json(data, dirr, base_name):
+    json_dump = json.dumps(data, cls=NumpyEncoder)
+    with open(os.path.join(dirr, base_name+".json"), 'w') as outfile:
+        json.dump(json_dump, outfile)
+
+    for key in data:
+        with open(os.path.join(dirr, "{}.json".format(key)), 'w') as outfile:
+            json_dump = json.dumps(data[key], cls=NumpyEncoder)
+            json.dump(json_dump, outfile)
+
+def save_dict_as_hdf5(data, dirr, base_name):
+    df = convert_to_df(data)
+    df["All"].to_hdf(os.path.join(dirr, base_name+".hdf5"), key='df', mode='w')
+    for key in df.get("keys", []):
+        data[key]["data"].to_hdf(os.path.join(dirr, "{}.hdf5".format(key)), key='df', mode='w')
+
+def save_data(self, type, dirr, base_name="data"):
+        """Saves the data in the specified type"""
+        try:
+            os.mkdir(os.path.join(os.path.normpath(dirr), "data"))
+        except:
+            pass
+
+        if type == "json":
+            # JSON serialize
+            self.log.info("Saving JSON file...")
+            save_dict_as_json(deepcopy(self.plotting_Object.data), os.path.join(os.path.normpath(dirr), "data"), base_name)
+        if type == "hdf5":
+            self.log.info("Saving HDF5 file...")
+            save_dict_as_hdf5(deepcopy(self.plotting_Object.data), os.path.join(os.path.normpath(dirr), "data"), base_name)
