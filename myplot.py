@@ -4,8 +4,8 @@ This scripts takes arguments parsed by the user, usually a config file"""
 import logging
 import sys, os
 
-from .forge.utilities import parse_args, LogFile, load_yaml, exception_handler, sanatise_units, sanatise_measurement
-from .forge.utilities import load_plugins
+from forge.utilities import parse_args, LogFile, load_yaml, exception_handler, sanatise_units, sanatise_measurement
+from forge.utilities import load_plugins
 from multiprocessing import Pool
 import traceback
 import holoviews as hv
@@ -19,7 +19,7 @@ import importlib
 
 from bokeh.io import save
 
-from .forge.tools import read_in_ASCII_measurement_files, read_in_JSON_measurement_files, save_plot
+from forge.tools import read_in_ASCII_measurement_files, read_in_JSON_measurement_files, save_plot
 
 class PlottingMain:
 
