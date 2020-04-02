@@ -109,7 +109,7 @@ def parse_args(config = None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--file", "--f", "--config", "--con", "--c", help="The init file with all the configs as a yaml styled file")
     parser.add_argument("--show", help="Show the plots or not, default is True", action="store_false", default=True)
-    parser.add_argument("--save", "--s", help="Save the plots, default is False", action="store_false", default=False)
+    parser.add_argument("--save", "--s", help="Save the plots, default is False", action="store_true", default=False)
     args = parser.parse_args(config)
 
     return args

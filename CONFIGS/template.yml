@@ -6,9 +6,11 @@
     - "D:\\Thesis\\pictures\\Plots\\VPX28442\\2S\\data\\singledata\\IVC_VPX28442_2S_04.json"
     - "D:\\Thesis\\pictures\\Plots\\VPX28442\\2S\\data\\singledata\\IVC_VPX28442_2S_11.json"
     - "D:\\Thesis\\pictures\\Plots\\VPX28442\\2S\\data\\singledata\\IVC_VPX28442_2S_13.json"
+  Output: "C:\\Users\\domin\\Desktop\\plot_dummy"
 
   Analysis:
     - IVCV_QTC # The type of analysis, which will be performed
+    
 
 
 # Optional Parameters
