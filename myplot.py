@@ -3,9 +3,10 @@ This scripts takes arguments parsed by the user, usually a config file"""
 
 import logging
 import sys, os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from .forge.utilities import parse_args, LogFile, load_yaml, exception_handler, sanatise_units, sanatise_measurement
-from .forge.utilities import load_plugins, reload_plugins
+from forge.utilities import parse_args, LogFile, load_yaml, exception_handler, sanatise_units, sanatise_measurement
+from forge.utilities import load_plugins, reload_plugins
 from multiprocessing import Pool
 import traceback
 import holoviews as hv
@@ -20,12 +21,9 @@ filterwarnings('ignore', message='save()', category=UserWarning)
 hv.extension('bokeh')
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 import importlib
-
-
 from bokeh.io import save
-
-from .forge.tools import read_in_ASCII_measurement_files, read_in_JSON_measurement_files, save_plot
-from .forge.tools import read_in_CSV_measurement_files
+from forge.tools import read_in_ASCII_measurement_files, read_in_JSON_measurement_files, save_plot
+from forge.tools import read_in_CSV_measurement_files
 
 class PlottingMain:
 
@@ -54,7 +52,10 @@ class PlottingMain:
             self.log.critical("Arguments parsed: {}".format(self.args))
 
         # Load the config to a dictionary
-        self.config = load_yaml(self.args.file)
+        if self.args.file:
+            self.config = load_yaml(self.args.file)
+        else:
+            raise ValueError('No config file passed to plot.')
 
         self.log.critical("Loaded config file: {}".format(self.args.file))
 

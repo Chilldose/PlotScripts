@@ -14,7 +14,7 @@ from forge.specialPlots import dospecialPlots
 from forge.utilities import line_intersection
 
 
-class TCAD:
+class notebook:
 
     def __init__(self, data, configs):
 
@@ -23,7 +23,7 @@ class TCAD:
         self.config = configs
         self.df = []
         self.basePlots = None
-        self.analysisname = "TCAD"
+        self.analysisname = "notebook"
         self.PlotDict = {"Name": self.analysisname}
         self.measurements = self.data["columns"]
         hv.renderer('bokeh')
