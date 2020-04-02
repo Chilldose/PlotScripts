@@ -4,6 +4,7 @@
 import os, sys, os.path
 from time import time
 import time
+import ast
 import yaml, json
 from copy import deepcopy
 import logging.config
@@ -33,6 +34,12 @@ def line_intersection(line1, line2):
     x = det(d, xdiff) / div
     y = det(d, ydiff) / div
     return x, y
+
+def reload_plugins(plugins):
+    """Reloads plugins"""
+    l.debug("Reloading analysis plugins...")
+    for module in plugins.values():
+        importlib.reload(module)
 
 def load_plugins(settings, rootdir):
     # Load all measurement functions
@@ -197,44 +204,45 @@ class CAxisTime():#pg.AxisItem):
         return (datetime.utcfromtimestamp(float(ts) / ts_mult))
 
 def create_new_file(filename="default.txt", filepath="default_path", os_file=True, suffix=".txt"):
-    """
-    Simply creates a file
+        """
+        Simply creates a file
 
-    :param filename:
-    :param filepath:
-    :param os_file:
-    :param suffix:
-    :return:
-    """
+        :param filename:
+        :param filepath:
+        :param os_file:
+        :param suffix:
+        :return: filepointer, fileversion
+        """
 
-    counter = 0
+        count = 1
+        if filepath == "default_path":
+            filepath = ""
+        elif filepath == "":
+            pass
+        else:
+            filepath += "/"
 
-    if filepath == "default_path":
-        filepath = ""
-    elif filepath == "":
-        pass
-    else:
-        filepath += "/"
+        filename = filename.split(".")[0]
 
-    filename += str(suffix)
+        # First check if Filename already exists, if so, add a counter to the file.
+        if os.path.isfile(os.path.abspath(filepath + filename + suffix)):
+            l.warning("Warning filename " + str(filename) + " already exists!")
+            filename = filename + "_" + str(count)  # Adds suffix to filename
+            while os.path.isfile(os.path.abspath(filepath + filename + suffix)):  # checks if file exists
+                count += 1
+                countlen = len(str(count))
+                filename = filename[:-countlen] + str(count)
+            l.info("Filename changed to " + filename + ".")
 
-    # First check if Filename already exists, when so, add a counter to the file.
-    if os.path.isfile(os.path.abspath(filepath + filename)):
-        l.warning("Warning filename " + str(filename) + " already exists!")
-        filename = filename[:-4] + "_" + str(counter) + ".txt"  # Adds sufix to filename
-        while os.path.isfile(os.path.abspath(filepath + filename)):  # checks if file exists
-            filename = filename[:-5] + str(counter) + ".txt"  # if exists than change the last number in filename string
-            counter += 1
-        l.info("Filename changed to " + filename + ".")
+        filename += str(suffix)
+        if os_file:
+            fp = os.open(os.path.abspath(filepath + filename), os.O_WRONLY | os.O_CREAT)  # Creates the file
+        else:
+            fp = open(os.path.abspath(filepath + filename), "w")
 
-    if os_file:
-        fp = os.open(os.path.abspath(filepath + filename), os.O_WRONLY | os.O_CREAT)  # Creates the file
-    else:
-        fp = open(os.path.abspath(filepath + filename), "w")
+        l.info("Generated file: " + str(filename))
 
-    l.info("Generated file: " + str(filename))
-
-    return fp
+        return fp, count
 
 
 # Opens a file for reading and writing
@@ -326,11 +334,15 @@ def read_from_file(filename="default.txt", filepath="default_path"):
 # These functions are for reading and writing to files------------------------------------
 # -------------------------------------------------------------------------------------end
 
-def load_yaml(path="file.yaml"):
+def load_yaml(path):
     """Loads a yaml file and returns the dict representation of it"""
     with open(os.path.normpath(path), 'r') as stream:
         try:
-            return yaml.load(stream)
+            yaml.add_constructor('!regexp', lambda l, n: re.compile(l.construct_scalar(n))) # For regex
+            data = yaml.load(stream, Loader=yaml.FullLoader)
+            if isinstance(data, str):
+                data = json.loads(data)
+            return data
         except yaml.YAMLError as exc:
             l.error("While loading the yml file {} the error: {} happend.".format(path, exc))
 

@@ -25,19 +25,26 @@ class IVCV_QTC:
     def __init__(self, data, configs):
 
         self.log = logging.getLogger(__name__)
-        self.data = convert_to_df(data, abs=True)
+        self.data = convert_to_df(data, abs=True, keys=["Voltage", "voltage", "current", "Current", "capacitance", "IV", "CV", "CVQValue", "humidity", "temperature"])
         self.config = configs
         self.df = []
         self.basePlots = None
         self.PlotDict = {"Name": "IVCV"}
         self.capincluded = False
-        if "capacitance" in self.data[self.data["keys"][0]]["data"]:
+        if "capacitance" in self.data[self.data["keys"][0]]["data"] or "CV" in self.data[self.data["keys"][0]]["data"]:
             self.data["columns"].insert(3,"1C2") # because we are adding it later on
             self.capincluded = True
         self.measurements = self.data["columns"]
         self.xaxis = self.measurements[0]
 
-        if "voltage" in self.measurements:
+        # The do not plot list, you can extend this list as you like
+        self.donts = ("voltage", "voltage_1", "Idark", "Idiel", "Rpoly", "Cac", "Cint", "Rint", "Pad", "Istrip", "Temperature", "Humidity")
+
+        if "Voltage" in self.measurements:
+            self.xaxis = "Voltage"
+            padidx = self.measurements.index("Voltage")
+            del self.measurements[padidx]
+        elif "voltage" in self.measurements:
             self.xaxis = "voltage"
             padidx = self.measurements.index("voltage")
             del self.measurements[padidx]
@@ -55,7 +62,11 @@ class IVCV_QTC:
 
         # Add the 1/c^2 data to the dataframes
         for df in self.data["keys"]:
-            if "capacitance" in self.data[df]["data"]:
+            if "CV" in self.data[df]["data"]:
+                self.data[df]["data"].insert(3, "1C2", 1 / self.data[df]["data"]["CV"].pow(2))
+                self.data[df]["units"].append("arb. units")
+                self.data[df]["measurements"].append("1C2")
+            elif "capacitance" in self.data[df]["data"]:
                 self.data[df]["data"].insert(3, "1C2", 1 / self.data[df]["data"]["capacitance"].pow(2))
                 self.data[df]["units"].append("arb. units")
                 self.data[df]["measurements"].append("1C2")
@@ -63,16 +74,21 @@ class IVCV_QTC:
         # Add the measurement to the list
 
         # Plot all Measurements
-        self.basePlots = plot_all_measurements(self.data, self.config, self.xaxis, "IVCV_QTC", do_not_plot=("voltage", "voltage_1"))
+        self.basePlots = plot_all_measurements(self.data, self.config, self.xaxis, "IVCV_QTC", do_not_plot = self.donts)
         self.PlotDict["BasePlots"] = self.basePlots
         self.PlotDict["All"] = self.basePlots
 
         # Add full depletion point to 1/c^2 curve
-        try:
-            c2plot = self.basePlots.Overlay.CV_CURVES_hyphen_minus_Full_depletion
-            self.basePlots.Overlay.CV_CURVES_hyphen_minus_Full_depletion = self.find_full_depletion(c2plot, self.data, self.config)
-        except Exception as err:
-            self.log.warning("No full depletion calculation possible... Error: {}".format(err))
+        if self.config["IVCV_QTC"].get("1C2", {}).get("DoFullDepletionCalculation", False):
+            try:
+                if self.basePlots.Overlay.CV_CURVES_hyphen_minus_Full_depletion.children:
+                    c2plot = self.basePlots.Overlay.CV_CURVES_hyphen_minus_Full_depletion.opts(clone = True)
+                else: c2plot = self.basePlots.Curve.CV_CURVES_hyphen_minus_Full_depletion.opts(clone = True)
+                fdestimation = self.find_full_depletion(c2plot, self.data, self.config, PlotLabel="Full depletion estimation")
+                self.PlotDict["All"] += fdestimation
+                self.PlotDict["BasePlots"] += fdestimation
+            except Exception as err:
+                self.log.warning("No full depletion calculation possible... Error: {}".format(err))
 
         # Whiskers Plot
         self.WhiskerPlots = dospecialPlots(self.data, self.config, "IVCV_QTC", "BoxWhisker", self.measurements)
@@ -83,12 +99,6 @@ class IVCV_QTC:
         # Reconfig the plots to be sure
         self.PlotDict["All"] = config_layout(self.PlotDict["All"], **self.config["IVCV_QTC"].get("Layout", {}))
 
-        # Add the download button for all data
-        #button = Button(label="Download", button_type="success")
-        #button.callback = CustomJS(args=dict(source=self.data),
-        #                           code=open(os.path.join(os.path.dirname(__file__), "download.js")).read())
-        #self.PlotDict["All"] += button
-        #self.PlotDict["download"] = button
         return self.PlotDict
 
 
@@ -116,9 +126,9 @@ class IVCV_QTC:
                 self.log.debug("Data: {}".format(samplekey))
                 sample = deepcopy(data[samplekey])
                 try:
-                    df = pd.DataFrame({"xaxis": sample["data"]["voltage"], "yaxis": sample["data"]["1C2"]})
+                    df = sample["data"][["voltage", "1C2"]]
                 except:
-                    df = pd.DataFrame({"xaxis": sample["data"]["Voltage"], "yaxis": sample["data"]["1C2"]})
+                    df = sample["data"][["Voltage", "1C2"]]
                 df = df.dropna()
 
 
@@ -188,6 +198,9 @@ class IVCV_QTC:
 
         # Update the plot specific options if need be
         returnPlot = plot * vline * right_line * left_line * text
+        #returnPlot = relabelPlot(returnPlot, "CV CURVES - Full depletion calculation")
         returnPlot = customize_plot(returnPlot, "1C2", configs["IVCV_QTC"], **addConfigs)
+
+
 
         return returnPlot

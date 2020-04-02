@@ -4,7 +4,7 @@
 __version__ = "0.1.1"
 __date__ = "11.Sept.2019"
 
-import yaml
+import yaml, json
 import logging
 import os, io
 import numpy as np
@@ -103,17 +103,40 @@ class stripanalysis:
         """This function reads in a QTC measurement file and return a dictionary with the data in the file"""
         try:
             for files in filepathes:
-                current_file = files
-                with open(str(files)) as f:
-                    data = f.read()
-                data = self.parse_file_data(data)
+
+                # Find file extension
+                fileext = files.split(".")[-1]
+
+                if fileext in ["txt", "dat"]:
+                    # Ascii file type
+                    self.log.debug("Ascii file found {}".format(files))
+                    current_file = files
+                    with open(str(files)) as f:
+                        data = f.read()
+                    data = self.parse_file_data(data)
+
+                # json file type
+                if fileext in ["json"]:
+                    self.log.debug("JSON file found {}".format(files))
+                    with open(files, "r") as stream:
+                        try:
+                            data = yaml.load(stream, Loader=yaml.FullLoader)
+                            if isinstance(data, str):
+                                data = json.loads(data)
+                        except yaml.YAMLError as exc:
+                            self.log.error("While loading the yml file {} the error: {} happend.".format(files, exc))
+
+                # Convert all lists to np.ndarrays
+                for key, dat in data["data"].items():
+                    data["data"][key] = np.array(dat)
+
                 # Add filename and rest of the dict important values
-                filename = os.path.basename(str(files)).split(".")[0][4:]
+                filename = os.path.basename(str(files)).split(".")[0]
                 data.update({"analysed": False, "plots": False})
                 self.all_data.update({filename: data}) # So nothing get deleted if additional files are loaded
 
         except Exception as e:
-            self.log.error("Something went wrong while importing the file " + str(current_file) + " with error: " + str(e))
+            self.log.error("Something went wrong while importing the file " + str(files) + " with error: " + str(e))
 
     def parse_file_data(self, filecontent):
         """This function parses the file content to the needed data type"""
@@ -123,6 +146,7 @@ class stripanalysis:
         measurements = filecontent[self.settings["measurement_description"]-1:self.settings["measurement_description"]]
         units = filecontent[self.settings["units_line"]-1:self.settings["units_line"]]
         data = filecontent[self.settings["data_start"]-1:]
+        separator = self.settings.get("data_separator", None)
 
         # First parse the units and measurement types
         parsed_obj = []
@@ -138,7 +162,7 @@ class stripanalysis:
         parsed_data = []
         data_dict = {}
         for dat in data:
-            dat = dat.split()
+            dat = dat.split(separator)
             for j, singleentry in enumerate(dat):
                 try: # try to convert to number
                     dat[j] = float(singleentry.strip())
@@ -188,10 +212,10 @@ class stripanalysis:
         if len(end):
             if end[-1] < len(padarray):
                 end[-1] = len(padarray)
-            #star = time()
+
             for st, en in zip(start, end):
                 results.append(self.lms_line(padarray[st:en], data[data_label][st:en], self.settings["quantile"]))
-            #print(time()-star)
+
         else:
             self.log.warning("To few data for lms fit in data {} with current settings. Returning mean instead.".format(data_label))
             results.append((np.mean(data[data_label]), 0))
@@ -390,12 +414,19 @@ class stripanalysis:
         # Todo: clean up this ugly code
         # todo: currently if Istrip and rply are measured at different points it will come to a data mismatch in the ned
         # and this method will fail!!!
+
         First = data[compare[0]]
         Firstcut = cutted[compare[0]]
         Firstlms = lms_data[compare[0]]
         Second = data[compare[1]]
         Secondcut = cutted[compare[1]]
         Secondlms = lms_data[compare[1]]
+
+        if np.sum(Firstcut) != np.sum(Secondcut):
+            both_cuts = np.logical_and(Firstcut, Secondcut)
+            Firstcut, Secondcut = both_cuts, both_cuts
+            self.log.warning("Cannot compare array of different sizes. Taking logical and and try with this data. Data sets: {}".format(compare))
+
 
         xvalues = data["Pad"]
         Fxval = xvalues[Firstcut]
@@ -538,11 +569,12 @@ class stripanalysis:
                 # Piecewise LMS fit and relative Threshold calculation for all datasets
                 piecewiselms = {}
                 for sdata in working_data:
-                    piecewiselms[sdata] = self.do_piecewise_lms_fit(sdata,
-                                                                    working_data,
-                                                                    cutted_array,
-                                                                    self.settings["LMSsize"],
-                                                                    )
+                    if sdata in ["Istrip", "Idark", "Rpoly", "Rint", "Cint", "Idiel", "Cac", "QValue"]:
+                        piecewiselms[sdata] = self.do_piecewise_lms_fit(sdata,
+                                                                        working_data,
+                                                                        cutted_array,
+                                                                        self.settings["LMSsize"],
+                                                                        )
 
                 # 2x Istrip, 0.5x Rpoly, implant short
                 implant = self.find_implant_short(working_data,

@@ -4,8 +4,8 @@ This scripts takes arguments parsed by the user, usually a config file"""
 import logging
 import sys, os
 
-from forge.utilities import parse_args, LogFile, load_yaml, exception_handler, sanatise_units, sanatise_measurement
-from forge.utilities import load_plugins
+from .forge.utilities import parse_args, LogFile, load_yaml, exception_handler, sanatise_units, sanatise_measurement
+from .forge.utilities import load_plugins, reload_plugins
 from multiprocessing import Pool
 import traceback
 import holoviews as hv
@@ -13,13 +13,19 @@ from bokeh.io import show
 from pathlib import Path
 from copy import deepcopy
 from time import sleep
+
+from warnings import filterwarnings
+filterwarnings('ignore', message='save()', category=UserWarning)
+
 hv.extension('bokeh')
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 import importlib
 
+
 from bokeh.io import save
 
-from forge.tools import read_in_ASCII_measurement_files, read_in_JSON_measurement_files, save_plot
+from .forge.tools import read_in_ASCII_measurement_files, read_in_JSON_measurement_files, save_plot
+from .forge.tools import read_in_CSV_measurement_files
 
 class PlottingMain:
 
@@ -49,6 +55,7 @@ class PlottingMain:
 
         # Load the config to a dictionary
         self.config = load_yaml(self.args.file)
+
         self.log.critical("Loaded config file: {}".format(self.args.file))
 
         # Initialize process pool
@@ -56,11 +63,19 @@ class PlottingMain:
 
         self.log.critical("Loading data files...")
         if self.config["Filetype"].upper() == "ASCII":
-            self.data, load_order = read_in_ASCII_measurement_files(self.config["Files"], self.config["ASCII_file_specs"])
-            self.config["file_order"] = load_order # To keep easy track of the names and not the pathes
+            try:
+                self.data, load_order = read_in_ASCII_measurement_files(self.config["Files"], self.config["ASCII_file_specs"])
+                self.config["file_order"] = load_order # To keep easy track of the names and not the pathes
+            except TypeError:
+                self.log.critical("The data typ seem not to be ASCII, trying with JSON file type.")
+                self.config["Filetype"] = "JSON"
 
         elif self.config["Filetype"].upper() == "JSON":
             self.data, load_order = read_in_JSON_measurement_files(self.config["Files"])
+            self.config["file_order"] = load_order  # To keep easy track of the names and not the pathes
+
+        elif self.config["Filetype"].upper() == "CSV":
+            self.data, load_order = read_in_CSV_measurement_files(self.config["Files"])
             self.config["file_order"] = load_order  # To keep easy track of the names and not the pathes
 
         # Sanatise units and measurements
@@ -75,6 +90,7 @@ class PlottingMain:
 
     def run(self):
         """Runs the script"""
+        reload_plugins(self.plugins)
         self.plot()
         if self.args.show:
             self.show_results()
@@ -117,9 +133,11 @@ class PlottingMain:
             else:
                 self.log.info("No 'all' plot defined, skipping...")
 
-    def save_to(self):
+    def save_to(self, progress_queue=None):
         """This function saves all plots from every analysis for each datasets as svg"""
         self.log.info("Saving plots...")
+        progress_steps = 0
+        saved = 0
         # Generate base folder
         save_dir = os.path.normpath(self.config.get("Output", "Plots"))
         try:
@@ -128,38 +146,53 @@ class PlottingMain:
         except:
             self.log.warning("The directory: {} already exists, files inside can/will be overwritten!".format(save_dir))
         if os.path.exists(os.path.normpath(save_dir)):
+            if progress_queue:
+                progress_queue.put({"STATE": "Saving plots..."})
             for plot in self.plotObjects:
                 if "All" in plot:
                     self.log.info("Saving all subplots from the 'All' plot...")
                     Allplots = plot["All"]
                     try:
                         plotslist_tuple = Allplots.keys()
+                        progress_steps += len(plotslist_tuple)
                         for path in plotslist_tuple:
+                            if progress_queue:
+                                progress_queue.put({"PROGRESS": saved/(progress_steps + 1)})
                             plots = Allplots
                             for attr in path:
                                 plots = getattr(plots, attr)
                             try:
-                                label = plots._label
-                            except:
                                 label = "_".join(path)
+                            except:
+                                label = plots._label
+
                             save_plot(label, plots, save_dir, save_as=self.config["Save_as"])
+                            saved += 1
                     except:
                         save_plot(Allplots.group, Allplots, save_dir, save_as=self.config["Save_as"])
+                        saved += 1
 
                 else:
                     self.log.info("Saving all subplots from the 'All' not possible due to missing key...")
                     self.log.info("Saving all plots across the dictionary...")
+                    progress_steps = len(plot.items())
                     for key, subplot in plot.items():
+                        if progress_queue:
+                            progress_queue.put({"progress": saved/(progress_steps + 1)})
                         save_plot(key, subplot, save_dir)
+                        saved += 1
                 try:
                     self.log.info("Export the 'All' html plot...")
                     save_plot(plot.get("Name", "All Plots"), plot["All"], save_dir)
-                    #save(hv.render(plot["All"], backend='bokeh'), os.path.join(save_dir,"{}.html".format("All plots")))
+                    if progress_queue:
+                        progress_queue.put({"PROGRESS": 1})
                 except:
                     self.log.warning("'All plots' could not be saved....")
 
         else:
             self.log.error("The path: {} does not exist...".format(save_dir))
+        if progress_queue:
+            progress_queue.put({"STATE": "IDLE"})
 
     @staticmethod
     def start_analysis(analysis, analysis_obj, data, config, log):
@@ -173,7 +206,7 @@ class PlottingMain:
             try:
                 exc_info = sys.exc_info()
             except Exception as err2:
-                log.error("A really bad error happend in analysis process {}! "
+                log.error("A really bad error happened in analysis process {}! "
                                "System exception info could not be obtained correctly. "
                                "The thing I have is the exception itself: {}"
                                ", and the error while obtaining the stack trace: {}".format(analysis, err, err2))
