@@ -33,7 +33,16 @@ In principle such a file looks like this:
   Files: # The files which are plotted together
     - MyMeasurementfilePath.txt
 
-  Filetype: ASCII # What kind of type is my file, other options are json or yml
+  Filetype: ASCII # What kind of type is my file, other options are CSV,JSON, customizations
+
+  # If CUSTOM was choosen in 'Filetype', then you must define this custom specs section to tell where to find the file etc
+  Custom_specs:
+    path: <path_to_your_python_file> # The path to your python file where the importer is
+    module: foo # The module name
+    name: bar # The function name inside you want to load
+    parameters: # Additional parameters your importer needs. Do not use if you dont need ones
+      param1: 1
+      param2: "Hello"
 
   Output: myplot #Output folder path for my plots
 
@@ -113,6 +122,19 @@ In principle such a file looks like this:
           ToolsOptions: # These options are for the PlotScripts tool box, or for the self written customizations
               yaxisENG: True # If you want to plot the y axis in engineering representation
 </pre>
+
+# Custom importer
+
+If the given ASCII, JSON or CSV importer does not fit your needs you can write your own importer to import your data.
+For that you have to specify the Filetype entry in the configs as 'CUSTOM' and define a 'Custom_specs' section as
+seen in the example config.
+Inside your python script a function named after the entry name in the Custom_specs section must be there.
+This function gets 1 positional argument which is a list of filepathes to the choosen files. And all parameters as kwargs
+specified in the 'parameters' entry in the Custom_specs section. If you do not need any extra parameters you can delete the parameters
+entry in your config.
+
+After parsing your data, the framework wants as a return a dict. The top level keys must be a kind of representation of your files (I use the filename).
+The values to this keys are again dicts with keys beeing the columns/data sets inside like voltage, capacitance etc. As values it can be any iterable object. But I would recommend a list or a numpy array.  
 
 
 # The measurements files
