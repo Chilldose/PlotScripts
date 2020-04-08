@@ -3,27 +3,20 @@ This scripts takes arguments parsed by the user, usually a config file"""
 
 import logging
 import sys, os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from forge.utilities import parse_args, LogFile, load_yaml, exception_handler, sanatise_units, sanatise_measurement
 from forge.utilities import load_plugins, reload_plugins
-from multiprocessing import Pool
 import traceback
 import holoviews as hv
 from bokeh.io import show
 from pathlib import Path
 from copy import deepcopy
 from time import sleep
-
 from warnings import filterwarnings
 filterwarnings('ignore', message='save()', category=UserWarning)
-
 hv.extension('bokeh')
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
-import importlib
-from bokeh.io import save
-from forge.tools import read_in_ASCII_measurement_files, read_in_JSON_measurement_files, save_plot
-from forge.tools import read_in_CSV_measurement_files
+from forge.tools import read_in_files, save_plot, read_in_CUSTOM_measurement_files
 
 class PlottingMain:
 
@@ -34,14 +27,10 @@ class PlottingMain:
         self.rootdir = Path(__file__).parent.resolve()
         self.plotObjects = []
 
-
         # Initialize a logfile class
         self.logFile = LogFile(path="LogFiles\LoggerConfig.yml")
 
         self.log = logging.getLogger("mainPlotting")
-
-        # Init Except hook
-        #sys.excepthook = exception_handler
 
         # Get the args parsed to this script if necessary
         if not configs:
@@ -52,37 +41,15 @@ class PlottingMain:
             self.log.critical("Arguments parsed: {}".format(self.args))
 
         # Load the config to a dictionary
-        if self.args.file:
-            self.config = load_yaml(self.args.file)
-        else:
-            raise ValueError('No config file passed to plot.')
+        self.config = load_yaml(self.args.file)
 
         self.log.critical("Loaded config file: {}".format(self.args.file))
 
-        # Initialize process pool
-        #self.pool = Pool(processes=self.config.get("Poolsize", 1))
 
         self.log.critical("Loading data files...")
-        if self.config["Filetype"].upper() == "ASCII":
-            try:
-                self.data, load_order = read_in_ASCII_measurement_files(self.config["Files"], self.config["ASCII_file_specs"])
-                self.config["file_order"] = load_order # To keep easy track of the names and not the pathes
-            except TypeError:
-                self.log.critical("The data typ seem not to be ASCII, trying with JSON file type.")
-                self.config["Filetype"] = "JSON"
+        self.data, load_order = read_in_files(self.config["Files"], self.config)
+        self.config["file_order"] = load_order  # To keep easy track of the names and not the pathes
 
-        elif self.config["Filetype"].upper() == "JSON":
-            self.data, load_order = read_in_JSON_measurement_files(self.config["Files"])
-            self.config["file_order"] = load_order  # To keep easy track of the names and not the pathes
-
-        elif self.config["Filetype"].upper() == "CSV":
-            self.data, load_order = read_in_CSV_measurement_files(self.config["Files"])
-            self.config["file_order"] = load_order  # To keep easy track of the names and not the pathes
-
-        # Sanatise units and measurements
-        #for data in self.data.values():
-            #data["units"] = sanatise_units(data["units"])
-            #data["measurements"] = sanatise_measurement(data["measurements"])
         self.log.critical("Loading data files completed.")
 
         # Loading measurement plugins

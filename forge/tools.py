@@ -4,7 +4,9 @@ import numpy as np
 import logging
 from .utilities import load_yaml
 import os, sys
+import traceback
 import re
+import ast
 import holoviews as hv
 from holoviews import opts
 import numpy as np
@@ -16,6 +18,7 @@ from bokeh.io import save
 import json, yaml
 from copy import deepcopy
 from bokeh.models import HoverTool
+import importlib.util
 try:
     import pdfkit
 except:
@@ -133,7 +136,7 @@ def plot(data, config, xaxis_measurement, analysis_name, do_not_plot=(), plot_on
     :param analysis_name: The analysis name out of which the configs for the individual plots are extracted
     :param do_not_plot: List/tuple of plots which should not be plotted aka. columns in each dataset
     :param plot_only: List/tuple of plots which should only be plottet aka. columns in each dataset
-    :param keys: the keys from which data sets the plotting should be done
+    :param keys: the keys from which data sets the plotting should be done, aka the data file name
     :return: Holoviews Plot object
     """
 
@@ -275,8 +278,15 @@ def convert_to_df(convert, abs = False, keys = "all"):
         for key in keys:
             if key in precol:
                 columns.append(key)
+        if not columns:
+            raise Exception("No passed keys: {} matched the possible columns of the passed data: {}. "
+                            "DataFrame generation failed!".format(keys, precol))
     elif keys == "all":
         columns = precol
+    if not columns:
+        raise Exception("DataFrame generation failed! No valid columns found!")
+
+
 
     return_dict = {"All": pd.DataFrame(columns=columns), "keys": index, "columns":columns}
     for key, data in to_convert.items():
@@ -305,6 +315,18 @@ def convert_to_df(convert, abs = False, keys = "all"):
         return_dict["All"] = pd.concat([return_dict["All"],df], sort=True) # all files together
 
     return return_dict
+
+def rename_columns(df, new_names):
+    """Renames columns in a data frame. Needs the dataframe and a dict of the desired names"""
+    df["All"] = df["All"].rename(columns=new_names)
+    df["columns"] = list(df["All"].columns)
+
+    for key in df["keys"]:
+        df[key]["data"] = df[key]["data"].rename(columns=new_names)
+        df[key]["measurements"] = list(df[key]["data"].columns)
+
+    return df
+
 
 def plainPlot(plotType, xdata, ydata, label="NOName", plotName=None, configs={}, **addConfigs):
     """
@@ -412,8 +434,14 @@ def get_axis_labels(df_list, key, kdims, vdims):
 
     return xlabel, ylabel
 
-def relabelPlot(plot, label):
-    return plot.relabel(label)
+def relabelPlot(plot, label, group=None):
+    return plot.relabel(label, **{"group": group} if group else {})
+
+def applyPlotOptions(plot, optionsdict):
+    """Applies user defined options directly to the plot without changing previous options"""
+    # Now convert the non converted values in the dict
+    options = ast_evaluate_dict_values(optionsdict)
+    return plot.opts(options)
 
 def customize_plot(plot, plotName, configs, **addConfigs):
     """
@@ -438,6 +466,10 @@ def customize_plot(plot, plotName, configs, **addConfigs):
     options.update(gen_opts)
     options.update(specific_opts)
     options.update(addConfigs)
+
+    # Now convert the non converted values in the dict
+    options = ast_evaluate_dict_values(options)
+
     try:
         if not newlabel:
             label = configs.get(plotName, {}).get("PlotLabel", "")
@@ -446,6 +478,103 @@ def customize_plot(plot, plotName, configs, **addConfigs):
     except AttributeError as err:
         log.warning("Relable of plot {} was not possible!".format(configs.get(plotName, {}).get("PlotLabel", "")))
     return plot
+
+def ast_evaluate_dict_values(edict):
+    """Ast evaluates dict entries and returns the evaluated dict."""
+    returndict = {}
+    for key, value in edict.items():
+        if isinstance(value, dict):
+            value = ast_evaluate_dict_values(value)
+        if isinstance(value, str): # Only evaluate str values all other must be correct
+            try:
+                value = eval(value)
+            except Exception as err:
+                log.debug("Could not interpret '{}' in key '{}' as a valid object. Stays as is! Error: {}".format(value, key, err))
+
+        returndict[key] = value
+    return returndict
+
+def read_in_files(filepathes, configs):
+    """
+    This function is to streamline the import of data
+    :param filepathes: A list of files
+    :param configs: the configs file content
+    :return: data dicts
+    """
+    filetype = configs.get("Filetype", None)
+    ascii_specs = configs.get("ASCII_file_specs", None)
+    custom_specs = configs.get("Custom_specs", None)
+
+    if filetype:
+        if filetype.upper() == "ASCII":
+            if ascii_specs:
+                return read_in_ASCII_measurement_files(filepathes, ascii_specs)
+            else:
+                log.error("ASCII file type files must be given with specifications how to interpret data.")
+        elif filetype.upper() == "JSON":
+            return read_in_JSON_measurement_files(filepathes)
+        elif filetype.upper() == "CSV":
+            return read_in_CSV_measurement_files(filepathes)
+        elif filetype.upper() == "CUSTOM":
+            if custom_specs:
+                data = read_in_CUSTOM_measurement_files(filepathes, custom_specs)
+                if data and isinstance(data, dict):
+                    return data, []
+                else:
+                    log.error("Return data from CUSTOM file parsing did not yield valid data. Data must be a dictionary!")
+                    return {}, []
+
+            else:
+                log.error("If you want to use custom file import you must specifiy a 'Custom_specs' section in "
+                          "your configuration.")
+                return {}
+
+    data = {}
+    load_order = []
+    for file in filepathes:
+        if os.path.exists(file):
+            filename, file_extension = os.path.splitext(file)
+            if file_extension.lower() == ".txt" or file_extension.lower == ".dat":
+                if ascii_specs:
+                    data.update(read_in_ASCII_measurement_files([file], ascii_specs))
+                else:
+                    log.error("ASCII file type files must be given with specifications how to interpret data.")
+            elif file_extension.lower() == ".json" or file_extension.lower == ".yml" or file_extension.lower == ".yaml":
+                data_new, order = read_in_JSON_measurement_files([file])
+                load_order.append(order)
+                data.update(data_new)
+                continue # In order to prevent the next load order to be executed
+            elif file_extension.lower() == ".csv":
+                data.update(read_in_CSV_measurement_files([file]))
+            load_order.append(file)
+        else:
+            log.error("Path {} does not exists, skipping file!".format(file))
+    return data, load_order
+
+def read_in_CUSTOM_measurement_files(filepathes, configs):
+    """
+    Loads a custom module for file import, executes it and returns data
+    :param filepathes: List of filepathes
+    :param module: the module name
+    :param name: the class/function name
+    :param kwargs: additional kwargs the module needs
+    :return: parsed data as dict
+    """
+    try:
+        path = configs["path"]
+        module = configs["module"]
+        name = configs["name"]
+        spec = importlib.util.spec_from_file_location(module, os.path.normpath(path))
+        func = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(func)
+        return getattr(func, name)(filepathes, **configs.get("parameters", {}))
+    except ImportError as err:
+        log.error("Could not load module for custom import with error: {}".format(err))
+        return None
+    except Exception as err:
+        log.error("An error happened while performing custom import: {}".format(traceback.format_exc()))
+        return None
+
 
 def read_in_CSV_measurement_files(filepathes):
     """This reads in csv files and converts the directly to a pandas data frame!!!"""
@@ -461,7 +590,9 @@ def read_in_CSV_measurement_files(filepathes):
         data_dict["data"] = data
         all_data[os.path.basename(file).split(".")[0]] = data_dict
 
-    return all_data, load_order
+    if len(load_order) > 1:
+        return all_data, load_order
+    else: return all_data
 
 
 
@@ -496,8 +627,8 @@ def read_in_JSON_measurement_files(filepathes):
                     all_data[filename] = item
                     load_order.append(filename)
 
-
         return all_data, load_order
+
 
     except Exception as e:
         log.warning("Something went wrong while importing the file " + str(files) + " with error: " + str(e))
@@ -523,7 +654,10 @@ def read_in_ASCII_measurement_files(filepathes, settings):
             all_data[filename] = data
             load_order.append(filename)
 
-        return all_data, load_order
+        if len(load_order) > 1:
+            return all_data, load_order
+        else:
+            return all_data
 
     except Exception as e:
         log.error("Something went wrong while importing the file " + str(current_file) + " with error: " + str(e))

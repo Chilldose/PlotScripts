@@ -6,6 +6,7 @@
     - "D:\\Thesis\\pictures\\Plots\\VPX28442\\2S\\data\\singledata\\IVC_VPX28442_2S_04.json"
     - "D:\\Thesis\\pictures\\Plots\\VPX28442\\2S\\data\\singledata\\IVC_VPX28442_2S_11.json"
     - "D:\\Thesis\\pictures\\Plots\\VPX28442\\2S\\data\\singledata\\IVC_VPX28442_2S_13.json"
+    
   Output: "C:\\Users\\domin\\Desktop\\plot_dummy"
 
   Analysis:
@@ -39,23 +40,23 @@
       # Measurement names and their config
       temperature:
           PlotLabel: Temperature
-          AdditionalPlots:
-              - BoxWhisker
+          #AdditionalPlots:
+          #    - BoxWhisker
           PlotOptions: # These options will directly be passed to the renderer, make sure they are valid. Look into holoviews, what options are supported
               show_grid: False
 
       humidity:
           PlotLabel: Humidity
-          AdditionalPlots:
-              - BoxWhisker
+          #AdditionalPlots:
+          #    - BoxWhisker
           PlotOptions: # These options will directly be passed to the renderer, make sure they are valid. Look into holoviews, what options are supported
               show_grid: False
 
       current:
           PlotLabel: IV CURVES
           UnitConversion: nano # Converts the units to nano (Warning: The correct units your data is in must be extractable from the measurement file!)
-          AdditionalPlots:
-              - BoxWhisker
+          #AdditionalPlots:
+              #- BoxWhisker
               
           PlotOptions: # These options will directly be passed to the renderer, make sure they are valid. Look into holoviews, what options are supported
               logy: True

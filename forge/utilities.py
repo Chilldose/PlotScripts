@@ -344,7 +344,7 @@ def load_yaml(path):
                 data = json.loads(data)
             return data
         except yaml.YAMLError as exc:
-            raise ValueError("While loading the yml file {} the error: {} happened.".format(path, exc))
+            l.error("While loading the yml file {} the error: {} happend.".format(path, exc))
 
 def timeit(method):
     """
