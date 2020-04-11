@@ -1,17 +1,20 @@
 --- # Dummy config file for testing
 
-  Filetype: JSON # Other options are json, ACII
-  
-  Files:
-    - "D:\\Thesis\\pictures\\Plots\\VPX28442\\2S\\data\\singledata\\IVC_VPX28442_2S_04.json"
-    - "D:\\Thesis\\pictures\\Plots\\VPX28442\\2S\\data\\singledata\\IVC_VPX28442_2S_11.json"
-    - "D:\\Thesis\\pictures\\Plots\\VPX28442\\2S\\data\\singledata\\IVC_VPX28442_2S_13.json"
+# Optional Parameters
+  ASCII_file_specs: # The specifications for the ascii file type measurements files
+    header_lines: 8
+    measurement_description: 9
+    units_line: 9
+    data_start: 10
     
-  Output: "C:\\Users\\domin\\Desktop\\plot_dummy"
+  Files:
+    - ".\\testdata\\IVC_VPX28442_2S_04.txt"
+    - ".\\testdata\\IVC_VPX28442_2S_11.txt"
+    - ".\\testdata\\IVC_VPX28442_2S_19.txt"
+    - ".\\testdata\\IVC_VPX28442_2S_20.txt"
 
   Analysis:
     - IVCV_QTC # The type of analysis, which will be performed
-    
 
 
 # Optional Parameters
@@ -19,6 +22,16 @@
   # Options for the different Analyses scripts
   # These options are entirely up to you and what you need in your analysis
   IVCV_QTC:
+
+      Measurement_aliases: # Renames a column to another one (this is used to fit your column names with the ones in the analysis)
+          Voltage: voltage
+          CV: capacitance
+          IV: current
+          QValue: CVQValue
+          Humidity: humidity
+          Temperature: temperature
+
+
       General: # Options common to all plots
           fontsize: {'title': 28, 'labels': 24, 'xticks': 24, 'yticks': 24, 'legend': 11}
           responsive: False
@@ -40,23 +53,23 @@
       # Measurement names and their config
       temperature:
           PlotLabel: Temperature
-          #AdditionalPlots:
-          #    - BoxWhisker
+          AdditionalPlots:
+              - BoxWhisker
           PlotOptions: # These options will directly be passed to the renderer, make sure they are valid. Look into holoviews, what options are supported
               show_grid: False
 
       humidity:
           PlotLabel: Humidity
-          #AdditionalPlots:
-          #    - BoxWhisker
+          AdditionalPlots:
+              - BoxWhisker
           PlotOptions: # These options will directly be passed to the renderer, make sure they are valid. Look into holoviews, what options are supported
               show_grid: False
 
       current:
           PlotLabel: IV CURVES
           UnitConversion: nano # Converts the units to nano (Warning: The correct units your data is in must be extractable from the measurement file!)
-          #AdditionalPlots:
-              #- BoxWhisker
+          AdditionalPlots:
+              - BoxWhisker
               
           PlotOptions: # These options will directly be passed to the renderer, make sure they are valid. Look into holoviews, what options are supported
               logy: True
@@ -83,6 +96,7 @@
               yformatter: "%.0f"
           ToolsOptions: # These options are for the PlotScripts tool box, or for the self written customizations
               yaxisENG: True # If you want to plot the y axis in engineering representation
+
 
 
       CVQValue:

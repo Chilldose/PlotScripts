@@ -8,6 +8,12 @@
 conda env create -f requirements_<yourSystem>.yml
 ```
 
+Next step is to activate the new build environement:
+
+```
+conda activate PlotScripts
+```
+
 Now it should be possible to run the scripts. This you can do by:
 
 ```python
