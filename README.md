@@ -5,7 +5,7 @@
  First you need to install a Anaconda python 3.x version on your computer. After doing that you can install the conda envrionement by.
 
  ```python
-conda env create -f environment.yml
+conda env create -f requirements_<yourSystem>.yml
 ```
 
 Now it should be possible to run the scripts. This you can do by:
