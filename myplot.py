@@ -4,8 +4,8 @@ This scripts takes arguments parsed by the user, usually a config file"""
 import logging
 import sys, os
 
-from forge.utilities import parse_args, LogFile, load_yaml, exception_handler, sanatise_units, sanatise_measurement
-from forge.utilities import load_plugins, reload_plugins
+from .forge.utilities import parse_args, LogFile, load_yaml, exception_handler, sanatise_units, sanatise_measurement
+from .forge.utilities import load_plugins, reload_plugins
 import traceback
 import holoviews as hv
 from bokeh.io import show
@@ -16,7 +16,7 @@ from warnings import filterwarnings
 filterwarnings('ignore', message='save()', category=UserWarning)
 hv.extension('bokeh')
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
-from forge.tools import read_in_files, save_plot, read_in_CUSTOM_measurement_files
+from .forge.tools import read_in_files, save_plot, read_in_CUSTOM_measurement_files
 
 class PlottingMain:
 
@@ -72,9 +72,8 @@ class PlottingMain:
             if isinstance(self.config["Analysis"], list):
                 # All plot scripts must return the plot objects, in which all plots are included. Saving of plots will
                 # be done via the main script.
+                # config_data = [(analysis, analysis_obj, deepcopy(self.data), self.config.copy(), self.log) for analysis, analysis_obj in self.plugins.items()]
                 config_data = [(analysis, analysis_obj, deepcopy(self.data), self.config.copy(), self.log) for analysis, analysis_obj in self.plugins.items()]
-                # Todo: multiporcess the analysis
-                #self.plotObjects = self.pool.starmap(self.start_analysis, config_data)
                 self.plotObjects = []
                 for conf in config_data:
                     self.plotObjects.append(self.start_analysis(*conf))
@@ -167,7 +166,7 @@ class PlottingMain:
         """Simply starts the passed analysis"""
         try:
             log.critical("Starting analysis/plot script: {}".format(analysis))
-            analysisObj = getattr(analysis_obj, analysis)(data.copy(), config)
+            analysisObj = getattr(analysis_obj, analysis)(data, config)
             return analysisObj.run()
 
         except Exception as err:

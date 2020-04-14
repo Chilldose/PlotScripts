@@ -18,22 +18,22 @@ class Stripscan:
         self.log = logging.getLogger(__name__)
         self.config = configs
         self.analysisName = "Stripscan"
-        self.data = convert_to_df(data, abs=False)
+        self.data = convert_to_df(data, abs=self.config.get("abs_value_only", False))
         self.data = rename_columns(self.data, self.config[self.analysisName].get("Measurement_aliases", {}))
         self.finalPlot = None
         self.df = []
         self.measurements = self.data["columns"]
         self.donts = ()
 
-        if "Strip" in self.measurements:
-            padidx = self.measurements.index("Strip")
-            self.xrow = "Strip"
+        if "Pad" in self.measurements:
+            padidx = self.measurements.index("Pad")
+            self.xrow = "Pad"
         else:
             self.log.error("No 'Strip' column found in data. Analysis cannot be done!")
             return
 
         self.PlotDict = {"Name": self.analysisName}
-        self.donts = ["Strip", "Name"]
+        self.donts = ["Pad", "Name"]
 
         # Convert the units to the desired ones
         for meas in self.measurements:

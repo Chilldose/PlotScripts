@@ -476,7 +476,9 @@ def customize_plot(plot, plotName, configs, **addConfigs):
         else: label = newlabel
         plot = plot.relabel(label).opts(**options)
     except AttributeError as err:
-        log.warning("Relable of plot {} was not possible!".format(configs.get(plotName, {}).get("PlotLabel", "")))
+        log.error("Relabeling plot {} was not possible! Error: {}".format(configs.get(plotName, {}).get("PlotLabel", ""), err))
+    except ValueError as err:
+        log.error("Configuring plot {} was not possible! Error: {}".format(configs.get(plotName, {}).get("PlotLabel", ""), err))
     return plot
 
 def ast_evaluate_dict_values(edict):
@@ -536,7 +538,8 @@ def read_in_files(filepathes, configs):
             filename, file_extension = os.path.splitext(file)
             if file_extension.lower() == ".txt" or file_extension.lower == ".dat":
                 if ascii_specs:
-                    data.update(read_in_ASCII_measurement_files([file], ascii_specs))
+                    data, load = read_in_ASCII_measurement_files([file], ascii_specs)
+                    data.update(data)
                 else:
                     log.error("ASCII file type files must be given with specifications how to interpret data.")
             elif file_extension.lower() == ".json" or file_extension.lower == ".yml" or file_extension.lower == ".yaml":
@@ -545,7 +548,8 @@ def read_in_files(filepathes, configs):
                 data.update(data_new)
                 continue # In order to prevent the next load order to be executed
             elif file_extension.lower() == ".csv":
-                data.update(read_in_CSV_measurement_files([file]))
+                data_new, load = read_in_CSV_measurement_files([file])
+                data.update(data_new)
             load_order.append(file)
         else:
             log.error("Path {} does not exists, skipping file!".format(file))
@@ -590,9 +594,7 @@ def read_in_CSV_measurement_files(filepathes):
         data_dict["data"] = data
         all_data[os.path.basename(file).split(".")[0]] = data_dict
 
-    if len(load_order) > 1:
-        return all_data, load_order
-    else: return all_data
+    return all_data, load_order
 
 
 
@@ -654,10 +656,7 @@ def read_in_ASCII_measurement_files(filepathes, settings):
             all_data[filename] = data
             load_order.append(filename)
 
-        if len(load_order) > 1:
-            return all_data, load_order
-        else:
-            return all_data
+        return all_data, load_order
 
     except Exception as e:
         log.error("Something went wrong while importing the file " + str(current_file) + " with error: " + str(e))
