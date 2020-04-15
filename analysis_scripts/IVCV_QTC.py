@@ -53,7 +53,7 @@ class IVCV_QTC:
             unit = self.config[self.analysisName].get(meas, {}).get("UnitConversion", None)
             if unit:
                 self.data = convert_to_EngUnits(self.data, meas, unit)
-        hv.renderer('bokeh')
+        #hv.renderer('bokeh')
 
     def run(self):
         """Runs the script"""
@@ -94,6 +94,13 @@ class IVCV_QTC:
         if self.WhiskerPlots:
             self.PlotDict["Whiskers"] = self.WhiskerPlots
             self.PlotDict["All"] = self.PlotDict["All"] + self.WhiskerPlots
+
+        # Histogram Plot
+        self.HistogramPlots = dospecialPlots(self.data, self.config, self.analysisName, "Histogram",
+                                            self.measurements)
+        if self.HistogramPlots:
+            self.PlotDict["Histogram"] = self.HistogramPlots
+            self.PlotDict["All"] = self.PlotDict["All"] + self.HistogramPlots
 
         # Reconfig the plots to be sure
         self.PlotDict["All"] = config_layout(self.PlotDict["All"], **self.config[self.analysisName].get("Layout", {}))
