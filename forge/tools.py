@@ -10,8 +10,6 @@ import ast
 import holoviews as hv
 from holoviews import opts
 import numpy as np
-hv.extension('bokeh')
-hv.extension('matplotlib')
 import pandas as pd
 from bokeh.models import LinearAxis, Range1d
 #from bokeh.io import export_svgs, export_png
@@ -168,17 +166,17 @@ def save_plot(name, subplot, save_dir, save_as="default", backend="bokeh"):
         save_dir+="."+stdformat
         log.info("Saving plot {} as {} to {}".format(name, stdformat, save_dir))
         hv.save(subplot, save_dir, backend=backend)
-        return
 
     # Save the figure
     for save_format in save_as:
         try:
             log.info("Saving plot {} as {} to {}".format(name, save_format, path))
-            if save_format.lower() == "html" and backend=="bokeh":
+            if save_format.lower() == "html":
                 save_dir = os.path.join(path, "html")
                 if not os.path.exists(save_dir):
                     os.mkdir(save_dir)
-                hv.save(subplot, os.path.join(save_dir,name)+".html", backend=backend)
+                hv.save(subplot.opts(toolbar='above'), os.path.join(save_dir,name)+".html", backend=backend)
+                subplot.opts(toolbar='disable')
 
             if save_format.lower() == "png":
                 save_dir = os.path.join(path, "png")
@@ -191,8 +189,10 @@ def save_plot(name, subplot, save_dir, save_as="default", backend="bokeh"):
                     os.mkdir(save_dir)
                 hv.save(subplot, os.path.join(save_dir,name)+".svg", backend=backend)
 
+
         except Exception as err:
             log.warning("Exporting plot {} was not possible. Error: {}".format(name, err))
+
 
 def twiny(plot, element):
     # Setting the second y axis range name and range
@@ -228,16 +228,21 @@ def config_layout(PlotItem, **kwargs):
             ]
         hover = HoverTool(tooltips=TOOLTIPS)
         PlotItem.opts(
-            opts.Curve(tools=[hover]),
-            opts.Scatter(tools=[hover]),
-            opts.Histogram(tools=[hover]),
-            opts.Points(tools=[hover]),
-            opts.BoxWhisker(tools=[hover]),
-            opts.Bars(tools=[HoverTool(tooltips=[('Value of ID:',' $x'),('Value:','$y')])]),
-            opts.Violin(tools=[hover])
+            opts.Curve(tools=[hover], toolbar="disable"),
+            opts.Scatter(tools=[hover], toolbar="disable"),
+            opts.Histogram(tools=[hover], toolbar="disable"),
+            opts.Points(tools=[hover], toolbar="disable"),
+            opts.BoxWhisker(tools=[hover], toolbar="disable"),
+            opts.Bars(tools=[HoverTool(tooltips=[('Value of ID:',' $x'),('Value:','$y')])], toolbar="disable"),
+            opts.Violin(tools=[hover], toolbar="disable")
         )
     except AttributeError as err:
         log.error("Nonetype object encountered while configuring final plots layout. This should not happen! Error: {}".format(err))
+    except ValueError as err:
+        if "unexpected option 'tools'" in str(err).lower() or "unexpected option 'toolbar'" in str(err).lower():
+            pass
+        else:
+            raise
     return PlotItem
 
 def convert_to_df(convert, abs = False, keys = "all"):
