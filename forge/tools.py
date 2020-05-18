@@ -287,12 +287,13 @@ def convert_to_df(convert, abs = False, keys = "all"):
     for key, data in to_convert.items():
         return_dict[key] = data
         try:
-            if abs:
+            if abs: # Build abs of data or not
                 for meas, arr in data["data"].items():
                     if meas in columns:
-                        data["data"][meas] = np.abs(arr)
-            # Adding label of data
-            #data["data"]["Name"] = [key for i in range(len(data["data"][list(data["data"].keys())[0]]))]
+                        try:
+                            data["data"][meas] = np.abs(arr)
+                        except: # If the value is some non float or int etc
+                            pass
 
             sub_set = {}
             for ind in columns:
@@ -302,6 +303,12 @@ def convert_to_df(convert, abs = False, keys = "all"):
                     log.warning("Key {} was not present, no data conversion".format(ind))
             sub_set["Name"] = [key for i in range(len(sub_set[list(sub_set.keys())[0]]))]
             df = pd.DataFrame(data=sub_set)
+
+            # Convert all datatypes that are not float or int to np.nan
+            for meas in df.keys():
+                mask = df[meas].apply(type) == str
+                df[meas] = df[meas].mask(mask, np.nan)
+
         except KeyError as err:
             log.error("In order to convert the data to panda dataframe, the data structure needs to have a key:'data'")
             raise err
@@ -456,6 +463,7 @@ def customize_plot(plot, plotName, configs, **addConfigs):
     # Look if a PlotLabel is in the addConfigs
     if "PlotLabel" in addConfigs:
         newlabel = addConfigs.pop("PlotLabel")
+        plotName = newlabel
     else: newlabel = None
 
 
@@ -682,7 +690,6 @@ def read_in_ASCII_measurement_files(filepathes, settings):
             data.update({"analysed": False, "plots": False})
             all_data[filename] = data
             load_order.append(filename)
-
         return all_data, load_order
 
     except Exception as e:
@@ -826,7 +833,7 @@ def save_dict_as_xml(data_dict, filepath, name):
     Writes out the data as xml file, for the CMS DB
 
     :param filepath: Filepath where to store the xml
-    :param name: name of the file 
+    :param name: name of the file
     :param data_dict: The data to store in this file. It has to be the dict representation of the xml file
     :return:
     """
@@ -862,7 +869,6 @@ def save_data(self, type, dirr, base_name="data"):
             self.log.info("Saving xml file...")
             xml_dict = deepcopy(self.plotting_Object.data.get("xml_dict", self.plotting_Object.data)) # Either take the special xml representation or if not present take the normal dict representation
             save_dict_as_xml(xml_dict, os.path.join(os.path.normpath(dirr), "data"), base_name)
-
 
 def text_box(text, xpos, ypos, boxsize, fontsize=30, fontcolor="black", bgcolor="white"):
     """Generates a box with text in it"""
