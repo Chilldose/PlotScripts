@@ -26,7 +26,7 @@ class IVCV_QTC:
         self.log = logging.getLogger(__name__)
         self.config = configs
         self.analysisName = "IVCV_QTC"
-        self.data = convert_to_df(data, abs=True)
+        self.data = convert_to_df(data, abs=self.config.get("abs_value_only", False))
         self.data = rename_columns(self.data, self.config[self.analysisName].get("Measurement_aliases", {}))
         self.basePlots = None
         self.PlotDict = {"Name": "IVCV"} # Name of analysis and cnavas for all plots generated during this analysis
@@ -38,7 +38,7 @@ class IVCV_QTC:
         self.xaxis = self.measurements[0]
 
         # The do not plot list, you can extend this list as you like
-        self.donts = ("Name", "voltage_1", "Idark", "Idiel", "Rpoly", "Cac", "Cint", "Rint", "Pad", "Istrip")
+        self.donts = ["Name", "voltage_1", "Idark", "Idiel", "Rpoly", "Cac", "Cint", "Rint", "Pad", "Istrip"]
 
         if "voltage" in self.measurements:
             self.xaxis = "voltage"
@@ -103,6 +103,7 @@ class IVCV_QTC:
 
         # Reconfig the plots to be sure
         self.PlotDict["All"] = config_layout(self.PlotDict["All"], **self.config[self.analysisName].get("Layout", {}))
+        self.PlotDict["data"] = self.data
 
         return self.PlotDict
 
