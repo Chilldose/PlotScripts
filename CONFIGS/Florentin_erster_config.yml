@@ -1,0 +1,36 @@
+---
+  Files: # The files which are plotted together
+    - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Daten/CV_Diode_VC740655_24_14_Diode_GuardRingGround_12_7_2018_15h44m15s.txt
+    
+  Filetype: ASCII # What kind of type is my file, other options are CSV,JSON, customizations
+
+  Output: C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Plots #Output folder path for my plots
+  backend: bokeh # Choose the backend for the plotting Warning: Output may change with different backends.
+
+  Save_as: # save the plots in different data formats, if more than one is specified all of them will be plotted
+    - png
+  
+  plot_name: Plotversuch0
+
+  Analysis:
+    - GCD # The analysis Plugin over which the data will be run. These plugins must be located in the foler "analysis_scripts"
+
+  Poolsize: 4 # Maximum pool size of simultaneous analysis scripts
+
+  # Optional Parameters
+  ASCII_file_specs: # The specifications for the ascii file type measurements files
+    header_lines: 3
+    measurement_description: 4
+    units_line: 4
+    data_start: 5
+
+  GCD:
+    plateau: 0.03
+    UnitConversion: asd    
+    General: # Options common to all plots
+          fontsize: {'title': 28, 'labels': 24, 'xticks': 24, 'yticks': 24, 'legend': 11}
+          responsive: False
+          width: 1200
+          height: 800
+          shared_axes: True
+          legend_position: "top_left"
