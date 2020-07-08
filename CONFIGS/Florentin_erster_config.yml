@@ -1,7 +1,12 @@
 ---
   Files: # The files which are plotted together
-    - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Daten/CV_Diode_VC740655_24_14_Diode_GuardRingGround_12_7_2018_15h44m15s.txt
-    
+    - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Daten/2020-07-08T11-51-40_HPK_VPX33234_016_PSSnvir_HM_EE_PQC_Flute_1_Polysilicon_Van-der-Pauw_cross.txt
+    - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Daten/2020-07-08T11-53-14_HPK_VPX33234_016_PSSnvir_HM_EE_PQC_Flute_1_Reverse_Polysilicon_Van-der-Pauw_cross.txt
+    - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Daten/2020-07-08T11-58-59_HPK_VPX33234_016_PSSnvir_HM_EE_PQC_Flute_1_N+_Van-der-Pauw_cross.txt    
+    - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Daten/2020-07-08T12-02-08_HPK_VPX33234_016_PSSnvir_HM_EE_PQC_Flute_1_Reverse_N+_Van-der-Pauw_cross.txt
+    - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Daten/2020-07-08T12-11-22_HPK_VPX33234_016_PSSnvir_HM_EE_PQC_Flute_1_P-stop_Van-der-Pauw_cross.txt
+    - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Daten/2020-07-08T12-17-31_HPK_VPX33234_016_PSSnvir_HM_EE_PQC_Flute_1_Reverse_P-stop_Van-der-Pauw_cross.txt
+  
   Filetype: ASCII # What kind of type is my file, other options are CSV,JSON, customizations
 
   Output: C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Plots #Output folder path for my plots
@@ -13,18 +18,18 @@
   plot_name: Plotversuch0
 
   Analysis:
-    - GCD # The analysis Plugin over which the data will be run. These plugins must be located in the foler "analysis_scripts"
-
+    - Van_der_Pauw # The analysis Plugin over which the data will be run. These plugins must be located in the foler "analysis_scripts"
+    
   Poolsize: 4 # Maximum pool size of simultaneous analysis scripts
 
   # Optional Parameters
   ASCII_file_specs: # The specifications for the ascii file type measurements files
-    header_lines: 3
-    measurement_description: 4
-    units_line: 4
-    data_start: 5
+    header_lines: 11
+    measurement_description: 12
+    units_line: 12
+    data_start: 13
 
-  GCD:
+  Van_der_Pauw:
     plateau: 0.03
     UnitConversion: asd    
     General: # Options common to all plots
@@ -33,4 +38,4 @@
           width: 1200
           height: 800
           shared_axes: True
-          legend_position: "top_left"
+          legend_position: top_left # funktioniert nur wenn oben mehr als ein filepfad angegeben ist
