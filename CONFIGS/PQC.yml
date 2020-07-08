@@ -1,8 +1,11 @@
 #__author__: Dallavalle Riccardo, __email__: dallavallericcardo@outlook.com
 ---
+  Files: # The files which are plotted together
+    - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Daten/CV_Diode_VC740655_24_14_Diode_GuardRingGround_12_7_2018_15h44m15s.txt
+    
   Filetype: CUSTOM # If CUSTOM you must define this custom specs section to tell where to find the file etc
   Custom_specs:
-    path: C:\Users\Viktoria\OneDrive\Hephy\Dokumente\PhD\PQCnew\UniDAQ\COMET\misc_plugins\PlotScripts\CONFIGS\importer\importer_PQC.py # The path to your python file where the importer is
+    path: C:/Users/flohu/OneDrive/Documents/GitHub/PlotScripts/CONFIGS/importer/importer_PQC.py # The path to your python file where the importer is
     module: importer_PQC # The module name
     name: importer # The function name inside you want to load
     parameters: # Additional parameters your importer needs. Do not use if you don't need ones
