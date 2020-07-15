@@ -31,11 +31,11 @@
 
   Van_der_Pauw:
     plateau: 0.03
-    UnitConversion: asd    
+    #UnitConversion: asd    
     General: # Options common to all plots
           fontsize: {'title': 28, 'labels': 24, 'xticks': 24, 'yticks': 24, 'legend': 11}
           responsive: False
           width: 1200
           height: 800
-          shared_axes: True
+          shared_axes: False
           legend_position: top_left # funktioniert nur wenn oben mehr als ein filepfad angegeben ist
