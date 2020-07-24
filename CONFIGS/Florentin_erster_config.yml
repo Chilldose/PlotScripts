@@ -39,7 +39,10 @@
     - Van_der_Pauw # The analysis Plugin over which the data will be run. These plugins must be located in the foler "analysis_scripts"
     
   Poolsize: 4 # Maximum pool size of simultaneous analysis scripts
-
+  
+  files_to_fit:
+    - 2020-07-08T11-51-40_HPK_VPX33234_016_PSSnvir_HM_EE_PQC_Flute_1_Polysilicon_Van-der-Pauw_cross #only the filename WITHOUT .txt also the path has to be given above in 'Files'
+    - 2020-07-08T12-11-22_HPK_VPX33234_016_PSSnvir_HM_EE_PQC_Flute_1_P-stop_Van-der-Pauw_cross
   # Optional Parameters
   ASCII_file_specs: # The specifications for the ascii file type measurements files
     header_lines: 11
@@ -48,7 +51,6 @@
     data_start: 13
 
   Van_der_Pauw:
-    file_to_fit: 2020-07-08T11-51-40_HPK_VPX33234_016_PSSnvir_HM_EE_PQC_Flute_1_Polysilicon_Van-der-Pauw_cross #only the filename WITHOUT .txt also the path has to be given above in 'Files'
     plateau: 0.03
     #UnitConversion: asd    
     General: # Options common to all plots

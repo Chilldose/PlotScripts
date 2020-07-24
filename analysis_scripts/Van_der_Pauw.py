@@ -16,7 +16,6 @@ from forge.utilities import line_intersection
 
 class Van_der_Pauw:
     def __init__(self, data, configs):
-
         self.log = logging.getLogger(__name__)
         self.data = convert_to_df(data, abs=False)
         self.config = configs
@@ -33,7 +32,7 @@ class Van_der_Pauw:
                      "Test structure", "_", "Sheet Resistance [Ohm/sq]", "Standard deviation"])
         self.PlotDict["All"] = None
         self.limits = {"P-stop": 25000, "Polysilicon": 3000, "N+": 50}
-        self.file_to_fit = self.config["Van_der_Pauw"]["file_to_fit"]
+        self.files_to_fit = self.config["files_to_fit"]
 
 
 
@@ -54,8 +53,9 @@ class Van_der_Pauw:
                 self.create_barchart(group[1], group[0], substrate[0])
 
         self.create_table()
-        if self.file_to_fit:
-            self.create_fit(self.file_to_fit)
+        if self.files_to_fit:
+            for file in self.files_to_fit:
+                self.create_fit(file)
         return self.PlotDict
 
     def sheet_resistance(self, file, fit=False):

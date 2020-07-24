@@ -1,7 +1,7 @@
 #__author__: Dallavalle Riccardo, __email__: dallavallericcardo@outlook.com
 ---
   Files: # The files which are plotted together
-    - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Daten/CV_Diode_VC740655_24_14_Diode_GuardRingGround_12_7_2018_15h44m15s.txt
+    - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/AlterStuff/CV_Diode_VC740655_24_14_Diode_GuardRingGround_12_7_2018_15h44m15s.txt
     
   Filetype: CUSTOM # If CUSTOM you must define this custom specs section to tell where to find the file etc
   Custom_specs:
