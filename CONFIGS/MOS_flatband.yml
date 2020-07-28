@@ -32,11 +32,27 @@
           width: 1200
           height: 800
           shared_axes: False
+          invert_xaxis: False
           #legend_position: "top_left"
     Derivative:
           do: True
           interpolate: True
+          plot: True
     Fit:
-          do: False
+          do: True
+          interpolate: True
+    parameter:
+          mos_area: 1.66e-2 #cm²
+          phi_m: 4.08 #aluminum work function
+          epsilon0: 8.85418e-12 #F/m
+          epsilonR: 3.9
+          q: 1.60217e-19 #elementary charge in Coulombs
+          electronAffinity: 4.05 #eV
+          bandGapEnergy: 1.12 #eV
+          intrinsicDopingConcentration: 1.45e+10 #cm^-3
+          SiliconDoping: 5.0e+12 #cm^-3
+          boltzmannConstant: 1.38064e-23 #J/K
+          Temperature: 293.15 #kelvin selbst holen !
+          n_i_intrinsic_carrier_concentration: 5.415e+9 #cm^-3
           
         
