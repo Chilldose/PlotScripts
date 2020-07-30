@@ -1,6 +1,7 @@
 ---
   Files: # The files which are plotted together
     - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Daten/FlatBand/2020-07-17T14-48-28_HPK_VPX33234_016_PSS_HM_WW_PQCFlutesRight_GRtoLO_PQC_Flute_1_MOS_capacitor_HV_Source.txt
+    - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Daten/2020-07-16T18-19-16_HPK_VPX33234_016_PSS_HM_WW_PQCFlutesRight_PQC_Flute_1_Reverse_P-stop_Van-der-Pauw_cross.txt
 
   Filetype: ASCII # What kind of type is my file, other options are CSV,JSON, customizations
 
@@ -14,7 +15,7 @@
 
   Analysis:
     - MOS_CV # The analysis Plugin over which the data will be run. These plugins must be located in the foler "analysis_scripts"
-
+   
   Poolsize: 4 # Maximum pool size of simultaneous analysis scripts
 
   # Optional Parameters
@@ -37,9 +38,9 @@
     Derivative:
           do: True
           interpolate: True
-          plot: True
+          plot: False
     Fit:
-          do: True
+          do: False
           interpolate: True
     parameter:
           mos_area: 1.66e-2 #cm²
@@ -54,5 +55,23 @@
           boltzmannConstant: 1.38064e-23 #J/K
           Temperature: 293.15 #kelvin selbst holen !
           n_i_intrinsic_carrier_concentration: 5.415e+9 #cm^-3
+      
+      
+  Van_der_Pauw:
+    plateau: 0.03
+    #UnitConversion: asd    
+    General: # Options common to all plots
+          fontsize: {'title': 28, 'labels': 24, 'xticks': 24, 'yticks': 24, 'legend': 11}
+          responsive: False
+          width: 500
+          height: 800
+          shared_axes: False
+          #legend_position: top_left # funktioniert nur wenn oben mehr als ein filepfad angegeben ist
           
+    Bar_chart:
+          CreateBarChart: Batch #Options are "Batch", "Wafer No." "HM location", "Test structure"
         
+  files_to_fit:
+    - 2020-07-08T11-51-40_HPK_VPX33234_016_PSSnvir_HM_EE_PQC_Flute_1_Polysilicon_Van-der-Pauw_cross #only the filename WITHOUT .txt also the path has to be given above in 'Files'
+    - 2020-07-08T12-11-22_HPK_VPX33234_016_PSSnvir_HM_EE_PQC_Flute_1_P-stop_Van-der-Pauw_cross
+   

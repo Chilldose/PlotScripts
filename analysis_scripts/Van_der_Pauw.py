@@ -12,6 +12,11 @@ from forge.tools import customize_plot, holoplot, convert_to_df, config_layout
 
 class Van_der_Pauw:
     def __init__(self, data, configs):
+        '''removes wrong data'''
+        for file in list(data.keys()):
+            if "Van-der-Pauw" not in data[file]["header"][3]:
+                data.pop(file)
+
         self.log = logging.getLogger(__name__)
         self.data = convert_to_df(data, abs=False)
         self.config = configs
@@ -42,7 +47,7 @@ class Van_der_Pauw:
             sheet_r, std = self.sheet_resistance(file)
             self.fill_filename_df(file, sheet_r, std)
         del self.filename_df["_"]
-        self.counter = 0
+
         '''groups barcharts by Substrate Type and then by given parameter'''
         for substrate in self.filename_df.groupby("Substrate Type"):
             for group in substrate[1].groupby(self.sort_parameter):
@@ -92,14 +97,8 @@ class Van_der_Pauw:
             std_mean2 = 0
             for i in group[1]["Standard deviation"]:
                 std_mean2 += (i/len(group[1]["Standard deviation"]))**2
-                self.counter += 1 #
-                print(self.counter) #
-            print("----------------")
             std_mean2 = np.sqrt(std_mean2)
-            std_mean_l.append(std_mean2) #
-            #std_mean_l.append((std_mean2, "len(group):",len(group[1]["Standard deviation"]))) #
-        std_mean = innermost_groups["Standard deviation"].mean() #
-
+            std_mean_l.append(std_mean2)
 
         '''calculate error of r_mean '''
         r_mean_error = []
@@ -114,10 +113,6 @@ class Van_der_Pauw:
 
         error = [max(i, j) for i, j in zip(r_mean_error, std_mean_l)]
 
-        print(std_mean)  #
-        print("######################")
-        print(std_mean_l)
-        print(r_mean_error)
 
         '''creates errorbars and configures the plot'''
         error_bars = hv.ErrorBars((keys, r_mean, error))

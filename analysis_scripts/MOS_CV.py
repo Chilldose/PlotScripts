@@ -3,7 +3,9 @@ import holoviews as hv
 import numpy as np
 import pandas as pd
 
-from forge.tools import customize_plot, holoplot, convert_to_df, config_layout
+
+from forge.PQC_analysis_funktions import plot_flatband_v
+from forge.tools import convert_to_df
 from forge.tools import convert_to_EngUnits
 
 from forge.utilities import line_intersection
@@ -13,6 +15,10 @@ from scipy.stats import linregress
 
 class MOS_CV:
     def __init__(self, data, configs):
+        '''removes wrong data'''
+        for file in list(data.keys()):
+            if "MOS capacitor" not in data[file]["header"][0]:
+                data.pop(file)
 
         self.log = logging.getLogger(__name__)
         self.data = convert_to_df(data, abs=False)
@@ -30,20 +36,20 @@ class MOS_CV:
 
         self.PlotDict["All"] = None
 
-
     def run(self):
         if self.do_derivative:
             self.derivative_analysis()
         if self.do_fit:
             self.fit_analysis()
+        self.create_table()
+
         return self.PlotDict
 
     def derivative_analysis(self):
-        # sollte ich überprüfen ob die werte aufsteigend sind ?
-        # sollte ich # Normalize capacity by the Area and set to cm^2 machen ?
         for file in self.data["keys"]:
             '''deletes rows with duplicate in xAxis (prevents division by zero error)'''
-            self.data[file]["data"] = self.data[file]["data"].drop_duplicates(subset=[self.measurements[1]],keep='first')
+            self.data[file]["data"] = self.data[file]["data"].drop_duplicates(subset=[self.measurements[1]],
+                                                                              keep='first')
 
             '''derives and fills df with normal or interpolated data'''
             x, y = list(self.data[file]["data"][self.measurements[1]]), list(self.data[file]["data"][self.measurements[3]])
@@ -57,6 +63,8 @@ class MOS_CV:
             self.plot_flatband(file, "derivative", self.interpolation_der)
             if self.plot_der:
                 self.plot_derivative(file)
+
+            self.calculate_paramteres(file, "derivative")
 
     @staticmethod
     def first_derivative(x, y):
@@ -75,7 +83,7 @@ class MOS_CV:
         return list(xnew), list(ynew)
 
     def fill_df(self, file, x, y, dy, name):
-        '''creates key "derivative" in data[file], with a Dataframe as value, in wich interpolated or normal data + derivative is stored'''
+        '''creates key "derivative" or "fit" in data[file], with a dict as value, in wich interpolated or normal data + derivative is stored'''
         dic = {"x": x, "y": y, "dy": dy}
         df = pd.DataFrame(dic)
         self.data[file][name] = {"dataframe": df}
@@ -96,15 +104,17 @@ class MOS_CV:
         x, y = self.data[file][ana_type]["dataframe"]['x'], self.data[file][ana_type]["dataframe"]['y']
         curve = hv.Curve(zip(x, y), kdims=self.measurements[1], vdims=self.measurements[3])
 
-        text_str = "Flatband Voltage: " + str(self.data[file][ana_type]["flatband"]) + "\nAnalysis Type: " + ana_type + "\nInterpolated: " + str(interpol)
+        text_str = "Flatband Voltage: " + str(
+            self.data[file][ana_type]["flatband"]) + "\nAnalysis Type: " + ana_type + "\nInterpolated: " + str(interpol)
         text = hv.Text(x.max() * (3 / 4), y.max() * (3 / 4), text_str, fontsize=20)
         line = hv.VLine(self.data[file][ana_type]["flatband"]).opts(color="black", line_width=1.0)
 
         curve = curve * text * line
         if ana_type == "fit":
             curve = curve * text * line * self.data[file]["fit"]["lines"][0] * self.data[file]["fit"]["lines"][1]
-        curve.opts(**self.config["MOS_CV"].get("General", {}), ylim=(y.min() - 3*y.min()/20, y.max() + y.max()/10))
-
+        curve.opts(**self.config["MOS_CV"].get("General", {}),
+                   ylim=(y.min() - 3 * y.min() / 20, y.max() + y.max() / 10))
+        #curve = plot_flatband_v(x, y, "derivative", width=1200, height=800) for testing PQC_analysis_funktions.py
         if self.PlotDict["All"] is None:
             self.PlotDict["All"] = curve
         else:
@@ -113,9 +123,11 @@ class MOS_CV:
     def fit_analysis(self):
         for file in self.data["keys"]:
             # deletes rows with duplicate in xAxis (prevents division by zero error)
-            self.data[file]["data"] = self.data[file]["data"].drop_duplicates(subset=[self.measurements[1]], keep='first')
+            self.data[file]["data"] = self.data[file]["data"].drop_duplicates(subset=[self.measurements[1]],
+                                                                              keep='first')
 
-            x, y = list(self.data[file]["data"][self.measurements[1]]), list(self.data[file]["data"][self.measurements[3]])
+            x, y = list(self.data[file]["data"][self.measurements[1]]), list(
+                self.data[file]["data"][self.measurements[3]])
             if self.interpolation_fit:
                 x, y = self.interpolate(x, y)
             self.fill_df(file, x, y, np.zeros(len(y)), "fit")
@@ -135,7 +147,7 @@ class MOS_CV:
             # See if the r2 value has increased and store it
             if r2_right >= RR2:
                 RR2 = r2_right
-                RightEndPoints = ((df["x"][idx], slope_right * df["x"][idx] + intercept_right), #speichert einfach die (x,y) werte des anfangs und end punkts
+                RightEndPoints = ((df["x"][idx], slope_right * df["x"][idx] + intercept_right),
                                   (df["x"][len(df["x"]) - 1], slope_right * df["x"][len(df["x"]) - 1] + intercept_right))
                 Right_stats = [RightEndPoints, slope_right, intercept_right, r_right, p_value, std_err_right]
 
@@ -173,11 +185,40 @@ class MOS_CV:
         flatband_voltage = line_intersection(fit_stats[0], Right_stats[0])
         self.data[file]["fit"]["flatband"] = round(flatband_voltage[0], 4)
 
-    def calculate_paramteres(self, file, ana_type):
-        prameter = self.config["MOS_CV"]["parameter"]
-        Cac = self.data[file][ana_type]["dataframe"]['y'].max()
-        area = prameter["mos_area"]
-        #oxide thickness e0/10 --> F/cm
-        t = (prameter["epsilon0"]/10) * (prameter["epsilonR"]/10) * area / Cac
 
-        Nox = Cac * (prameter["phi_m"] + self.data[file][ana_type]["flatband"]) / (area * prameter["q"])
+    def calculate_paramteres(self, file, ana_type):
+        param = self.config["MOS_CV"]["parameter"]
+        Cac = self.data[file][ana_type]["dataframe"]['y'].max()
+        area = param["mos_area"]
+        # oxide thickness e0/10 --> F/cm
+        t = param["epsilon0"] * param["epsilonR"] * (area * 10**-4) / Cac # * 10**-4 converts area from cm² to m²
+
+        phi_s = param["electronAffinity"] + param["bandGapEnergy"] / 2 \
+                + param["boltzmannConstant"] * self.data[file]["data"][self.measurements[7]].mean() / param["q"] \
+                * (np.log(param["SiliconDoping"]) / param["intrinsicDopingConcentration"])
+        phi_ms = param["phi_m"] - phi_s
+
+        Nox = Cac * (phi_ms + self.data[file][ana_type]["flatband"]) / (area * param["q"])
+
+
+        dic = {"t": t, "Nox": Nox, "phi_ms": phi_ms}
+        self.data[file][ana_type]["parameters"] = dic
+
+
+    def create_table(self):
+        fit_v = N_fit = der_v = N_der = t = phi = '_'
+        df = pd.DataFrame(columns=["File", "fit_voltage", "Nox_fit", "der_voltage", "Nox_der", "tox [nm]", "phi_ms"])
+        for file in self.data["keys"]:
+            if self.do_fit:
+                fit_v, N_fit = self.data[file]["fit"]["flatband"], self.data[file]["fit"]["parameters"]["Nox"]
+                t, phi = self.data[file]["fit"]["parameters"]["t"], self.data[file]["fit"]["parameters"]["phi_ms"]
+            if self.do_derivative:
+                der_v, N_der = self.data[file]["derivative"]["flatband"], self.data[file]["derivative"]["parameters"]["Nox"]
+                t, phi = self.data[file]["derivative"]["parameters"]["t"], self.data[file]["derivative"]["parameters"]["phi_ms"]
+            dic = {"File": file, "fit_voltage": fit_v, "Nox_fit": N_fit, "der_voltage": der_v, "Nox_der": N_der, "tox [nm]": t * 10**9, "phi_ms": phi}
+            df = df.append(dic, ignore_index=True)
+        table = hv.Table(df)
+        table.opts(width=1300, height=800)
+        self.PlotDict["All"] = self.PlotDict["All"] + table
+
+
