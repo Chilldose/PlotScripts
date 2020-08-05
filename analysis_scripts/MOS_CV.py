@@ -72,7 +72,7 @@ class MOS_CV:
         dy[0] = (y[0] - y[1]) / (x[0] - x[1])
         dy[-1] = (y[-1] - y[-2]) / (x[-1] - x[-2])
         for i in range(1, len(y) - 1):
-            dy[i] = (y[i + 1] - y[i - 1]) / (x[i] - x[i - 1])
+            dy[i] = (y[i + 1] - y[i - 1]) / (2 *(x[i] - x[i - 1]))
         return list(dy)
 
     @staticmethod

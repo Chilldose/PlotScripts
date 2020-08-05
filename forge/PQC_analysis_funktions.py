@@ -22,11 +22,12 @@ def first_derivative(x, y):
     dy[0] = (y[0] - y[1]) / (x[0] - x[1])
     dy[-1] = (y[-1] - y[-2]) / (x[-1] - x[-2])
     for i in range(1, len(y) - 1):
-        dy[i] = (y[i + 1] - y[i - 1]) / (x[i] - x[i - 1])
+        dy[i] = (y[i + 1] - y[i - 1]) / (2 * (x[i] - x[i - 1]))
     return list(dy)
 
-def interpolate(x, y):
-    xnew = np.arange(x[0], x[-1], 0.01)
+def interpolate(x, y, stepsize=0.01):
+    '''smaller stepsize --> more points'''
+    xnew = np.arange(x[0], x[-1], stepsize)
     f = interp1d(x, y, kind="cubic")
     ynew = f(xnew)
     return list(xnew), list(ynew)
@@ -122,7 +123,7 @@ def plot_flatband_v(x, y, ana_type, **kwargs):
     curve.opts(ylim=(min(y) - 3 * min(y) / 20, max(y) + max(y) / 10), **kwargs)
     return curve
 
-def derivative_analysis(x,y):
+def derivative_analysis(x, y):
     dy = first_derivative(x, y)
     df = pd.DataFrame({"x": x, "dy": dy})
     df = df.drop_duplicates(subset='x', keep='first')
