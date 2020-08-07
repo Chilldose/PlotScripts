@@ -25,7 +25,14 @@
     - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Daten/2020-07-16T18-19-16_HPK_VPX33234_016_PSS_HM_WW_PQCFlutesRight_PQC_Flute_1_Reverse_P-stop_Van-der-Pauw_cross.txt
     - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Daten/2020-07-16T18-19-16_HPK_VPX33234_016_PSS_HM_WW_PQCFlutesRight_PQC_Flute_1_Reverse_P-stop_Van-der-Pauw_cross.txt
     - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Daten/2020-07-16T18-19-16_HPK_VPX33234_016_PSS_HM_WW_PQCFlutesRight_PQC_Flute_1_Reverse_P-stop_Van-der-Pauw_cross.txt
+    - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Daten/meander/2020-08-03T17-10-45_HPK_VPX33234_018_PSS_HM-WW_HM_WW_PQCFlutesRight_PQC_Flute_2_Polysilicon_meander.txt
+    - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Daten/meander/2020-08-04T08-18-37_HPK_VPX33234_018_PSS_HM-WW_PQCFlutesRight_PQC_Flute_3_Metal_meander.txt
+    - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Daten/meander/2020-08-04T13-52-49_HPK_VPX33234_019_PSS_HM-WW_PQCFlutesLeft_PQC_Flute_2_Polysilicon_meander.txt
+    - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Daten/meander/2020-08-04T14-06-33_HPK_VPX33234_019_PSS_HM-WW_PQCFlutesLeft_PQC_Flute_3_Metal_meander.txt
     - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Daten/FET_Tests/2020-07-29T15-16-04_HPK_VPX33234_017_PSS_HM_WW_PQCFlutesRight_PQC_Flute_1_FET.txt
+    - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Daten/Contact_Chain/2020-08-04T09-22-38_HPK_VPX33234_018_PSS_HM-WW_PQCFlutesRight_PQC_Flute_4_Polysilicon_contact_chain.txt
+    - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Daten/Contact_Chain/2020-08-04T09-32-29_HPK_VPX33234_018_PSS_HM-WW_PQCFlutesRight_PQC_Flute_4_P+_contact_chain.txt
+    - C:/Users/flohu/OneDrive/Documents/Uni/Bachelor/BachelorArbeit/Daten/Contact_Chain/2020-08-04T09-33-26_HPK_VPX33234_018_PSS_HM-WW_PQCFlutesRight_PQC_Flute_4_N+_contact_chain.txt
 
   Filetype: CUSTOM # What kind of type is my file, other options are CSV,JSON, customizations
   
@@ -44,8 +51,11 @@
   plot_name: Mos_analysis
 
   Analysis:
-    - MOS_CV # The analysis Plugin over which the data will be run. These plugins must be located in the foler "analysis_scripts"
+    - Contact_Chain
     - Van_der_Pauw
+    #- Meander
+    #- MOS_CV # The analysis Plugin over which the data will be run. These plugins must be located in the foler "analysis_scripts"
+    
    
   Poolsize: 4 # Maximum pool size of simultaneous analysis scripts
 
@@ -105,4 +115,30 @@
   files_to_fit:
     - 2020-07-08T11-51-40_HPK_VPX33234_016_PSSnvir_HM_EE_PQC_Flute_1_Polysilicon_Van-der-Pauw_cross #only the filename WITHOUT .txt also the path has to be given above in 'Files'
     - 2020-07-08T12-11-22_HPK_VPX33234_016_PSSnvir_HM_EE_PQC_Flute_1_P-stop_Van-der-Pauw_cross
+    
+  Meander:
+    General: # Options common to all plots
+          fontsize: {'title': 28, 'labels': 24, 'xticks': 24, 'yticks': 24, 'legend': 11}
+          responsive: False
+          width: 500
+          height: 800
+          shared_axes: False
+          #legend_position: top_left # funktioniert nur wenn oben mehr als ein filepfad angegeben ist
+      
+    Bar_chart:
+          CreateBarChart: HM location #Options are "Batch", "Wafer No." "HM location", "Test structure"
+          
+          
+  Contact_Chain:  
+    General: # Options common to all plots
+          fontsize: {'title': 28, 'labels': 24, 'xticks': 24, 'yticks': 24, 'legend': 11}
+          responsive: False
+          width: 500
+          height: 800
+          shared_axes: False
+          #legend_position: top_left # funktioniert nur wenn oben mehr als ein filepfad angegeben ist
+          
+    Bar_chart:
+          CreateBarChart: Batch #Options are "Batch", "Wafer No." "HM location", "Test structure"
+
    

@@ -7,11 +7,11 @@ import matplotlib.pyplot as plt
 
 from forge.tools import convert_to_df
 
-class Van_der_Pauw:
+class Contact_Chain:
     def __init__(self, data, configs):
         '''removes wrong data'''
         for file in list(data.keys()):
-            if "van-der-pauw" not in data[file]["header"][3].lower() and "bulk cross" not in data[file]["header"][3].lower():
+            if "contact chain" not in data[file]["header"][3].lower():
                 data.pop(file)
 
         self.log = logging.getLogger(__name__)
@@ -19,17 +19,17 @@ class Van_der_Pauw:
         self.config = configs
         self.df = []
         self.basePlots = None
-        self.analysisname = "Van_der_Pauw"
+        self.analysisname = "Contact_Chain"
         self.PlotDict = {"Name": self.analysisname}
         self.measurements = self.data["columns"]
 
-        self.sort_parameter = self.config["Van_der_Pauw"]["Bar_chart"]["CreateBarChart"]
-        self.Substrate_Type = ["P-stop", "Polysilicon", "N+", "P+", "Metal", "bulk"]
+        self.sort_parameter = self.config["Contact_Chain"]["Bar_chart"]["CreateBarChart"]
+        self.Substrate_Type = ["Polysilicon", "N+", "P+"]
         self.filename_df = pd.DataFrame(
             columns=["Filename", "Substrate Type", "_", "Batch", "Wafer No.", "_", "HM location",
-                     "Test structure", "_", "Sheet Resistance [Ohm/sq]", "Standard deviation"])
+                     "Test structure", "Resistance", "Standard deviation"])
         self.PlotDict["All"] = None
-        self.limits = {"P-stop": 25000, "Polysilicon": 3000, "N+": 50, "P+": 1300, "Metal": 0.03, "bulk": 70000}
+        self.limits = {"Polysilicon": 4*10**7, "N+": 10**5, "P+": 8 * 10**4}
         self.files_to_fit = self.config["files_to_fit"]
 
     def list_to_dict(self, rlist):
@@ -64,11 +64,10 @@ class Van_der_Pauw:
         line = coef[0] * x + coef[1]
 
         '''calculate sheet Resistance and standard deviation'''
-        sheet_r += coef[0] * np.pi / np.log(2)
+        sheet_r += coef[0]
         variance = cov_matrix[0][0]
-        std = np.sqrt(variance) * np.pi / np.log(2)
-        plt.plot(x, y, 'yo', x, line, '--k')
-        #plt.show()
+        std = np.sqrt(variance)
+
         if fit:
             return sheet_r, std, line
         return sheet_r, std
@@ -78,13 +77,13 @@ class Van_der_Pauw:
         labels = ["Batch", "Wafer No.", "HM location", "Test structure"]
         labels.remove(self.sort_parameter)
         innermost_groups = group_df.groupby(labels)
-        r_mean = innermost_groups["Sheet Resistance [Ohm/sq]"].mean() ##calculate the error that happens here
+        r_mean = innermost_groups["Resistance"].mean() ##calculate the error that happens here
 
         '''creates chart data and BarChart Object'''
         keys = ["/".join(key) for key in innermost_groups.groups.keys()]
         chart_data = [(label, resistance) for label, resistance in zip(keys, r_mean)]
         labels = "/".join(labels)
-        chart = hv.Bars(chart_data, hv.Dimension(labels), "Sheet Resistance [Ohm/sq]")
+        chart = hv.Bars(chart_data, hv.Dimension(labels), "Resistance")
 
         '''calculates std_mean with error propagation'''
         std_mean_l = []
@@ -100,9 +99,9 @@ class Van_der_Pauw:
         for index, group in enumerate(innermost_groups):
             diff_from_mean = 0
             group_mean = r_mean[index]
-            for i in group[1]["Sheet Resistance [Ohm/sq]"]:
-                if len(group[1]["Sheet Resistance [Ohm/sq]"]) > 1:
-                    diff_from_mean += ((i - group_mean)**2/(len(group[1]["Sheet Resistance [Ohm/sq]"])-1))
+            for i in group[1]["Resistance"]:
+                if len(group[1]["Resistance"]) > 1:
+                    diff_from_mean += ((i - group_mean)**2/(len(group[1]["Resistance"])-1))
             diff_from_mean = np.sqrt(diff_from_mean)
             r_mean_error.append(diff_from_mean)
 
@@ -131,7 +130,7 @@ class Van_der_Pauw:
                 value_list = [file, subs] + value_list + value_list2
 
         dic = dict(zip(self.filename_df.keys(), value_list))
-        dic["Sheet Resistance [Ohm/sq]"] = sheet_r
+        dic["Resistance"] = sheet_r
         dic["Standard deviation"] = std
         self.filename_df = self.filename_df.append(dic, ignore_index=True)
 
