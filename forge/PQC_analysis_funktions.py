@@ -4,6 +4,7 @@ import pandas as pd
 
 from scipy.interpolate import interp1d
 from scipy.stats import linregress
+from scipy.signal import savgol_filter
 
 def linear_fit(x_Values,y_Values, full=False):
     '''returns array [y_values],slope, standard deviation of slope'''
@@ -17,6 +18,7 @@ def linear_fit(x_Values,y_Values, full=False):
         return line
 
 ###############
+'''MOS Flatbadvoltage'''
 def first_derivative(x, y):
     dy = np.zeros(len(y))
     dy[0] = (y[0] - y[1]) / (x[0] - x[1])
@@ -130,4 +132,77 @@ def derivative_analysis(x, y):
     df = df[df.dy == df.dy.max()]
     return round(df['x'].iloc[0], 4)
 
+###########################
+'''FET'''
 
+def plot_FET(x, y, ana_type, **kwargs):
+    dy = derivative_wrapper(x, y, ana_type)
+    return plot_ana(x, y, dy, ana_type, **kwargs)
+
+def derivative_wrapper(x, y, ana_type, window_size=11, poly_deg=3):
+    '''Ana 1: dy=first derivative, Ana 2: dy=second derivative, Ana 3: dy=second derivative of log(y)'''
+    if ana_type == "Ana 1":
+        y = savgol_filter(y, window_size, poly_deg)
+        dy = first_derivative(x, y)
+    elif ana_type == "Ana 2":
+        y = savgol_filter(y, window_size, poly_deg)
+        dy = first_derivative(x, y)
+        dy = first_derivative(x, dy)
+
+    elif ana_type =="Ana 3":
+        y = savgol_filter(y, window_size, poly_deg)
+        dy = first_derivative(x, np.log(y))
+        dy = first_derivative(x, dy)
+        dy[:] = [value / (2 * 10**6) for value in dy]
+    return dy
+
+def plot_ana(x, y, dy, ana_type, **kwargs):
+    curve = hv.Curve(zip(x, y))
+    derivative = hv.Curve(zip(x, dy)).opts(color="gray")
+    df = pd.DataFrame({"x": x, "y": y, "dy": dy})
+
+    '''returns voltage and: for Ana 1 fit line, for Ana 2/3 line to show where the voltage is'''
+    voltage, line = find_voltage(df, x, ana_type)
+    voltage = round(voltage, 4)
+
+    text_str = "voltage: " + str(voltage)
+    if ana_type == "Ana 3":
+        text_str += "\nDerivative scaled down by: \n/ (2 * 10^6)"
+    text = hv.Text(min(dy) * (6 / 4), max(dy) * (7 / 8), text_str, fontsize=20)
+
+    curve = curve * derivative * line * text
+    if ana_type == "Ana 3":
+        curve.opts(ylim=(min(dy) - 3 * min(y) / 20, max(dy) + max(dy) / 10), **kwargs)
+    else:
+        curve.opts(ylim=(min(y) - 3 * min(y) / 20, max(y) + max(y) / 10), **kwargs)
+
+    return curve
+
+def find_voltage(df, x, ana_type):
+    '''returns voltage and: for Ana 1 fit line, for Ana 2/3 line to mark voltage'''
+    if ana_type == "Ana 1":
+        df = df[df.dy == df.dy.max()]
+        inflection_x, inflection_y, slope = df['x'].iloc[0], df['y'].iloc[0], df['dy'].iloc[0]
+        d = inflection_y - slope * inflection_x
+        voltage = -d / slope # y = kx + d --> x = (y-d)/k with x = 0
+
+        fit_line = [[0, d], [x[-1], x[-1] * slope + d]]
+        fit_line = hv.Curve(fit_line).opts(color="red", line_width=1.5)
+        return voltage, fit_line
+
+    elif ana_type == "Ana 2":
+        df = df[df.dy == df.dy.max()]
+        voltage = df['x'].iloc[0]
+        line = hv.VLine(voltage).opts(color="black", line_width=1.0)
+        return voltage, line
+
+    elif ana_type == "Ana 3":
+        df = df[df.dy == df.dy.min()]
+        voltage = df['x'].iloc[0]
+        line = hv.VLine(voltage).opts(color="black", line_width=1.0)
+        return voltage, line
+
+def voltage_FET(x, y, ana_type):
+    dy = derivative_wrapper(x, y, ana_type)
+    df = pd.DataFrame({"x": x, "y": y, "dy": dy})
+    voltage = find_voltage(df, x, ana_type)
