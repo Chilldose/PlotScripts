@@ -38,6 +38,6 @@
           #legend_position: top_left # funktioniert nur wenn oben mehr als ein filepfad angegeben ist
       
     Bar_chart:
-          CreateBarChart: Batch
+          CreateBarChart: HM location
 
         
