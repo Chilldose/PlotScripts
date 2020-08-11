@@ -3,7 +3,7 @@ import logging
 import holoviews as hv
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+
 
 from forge.tools import convert_to_df
 
@@ -23,14 +23,21 @@ class Van_der_Pauw:
         self.PlotDict = {"Name": self.analysisname}
         self.measurements = self.data["columns"]
 
+        self.PlotDict["All"] = None
         self.sort_parameter = self.config["Van_der_Pauw"]["Bar_chart"]["CreateBarChart"]
         self.Substrate_Type = ["P-stop", "Polysilicon", "N+", "P+", "Metal", "bulk"]
+
+        '''columns have to be fitted according to sample_name + sample_type layout'''
         self.filename_df = pd.DataFrame(
             columns=["Filename", "Substrate Type", "_", "Batch", "Wafer No.", "_", "HM location",
                      "Test structure", "_", "Sheet Resistance [Ohm/sq]", "Standard deviation"])
-        self.PlotDict["All"] = None
+
         self.limits = {"P-stop": 25000, "Polysilicon": 3000, "N+": 50, "P+": 1300, "Metal": 0.03, "bulk": 70000}
         self.files_to_fit = self.config["files_to_fit"]
+
+        hvtext = hv.Text(0, 0, self.analysisname, fontsize=13).opts(color="black", xlabel='', ylabel='')
+        box = hv.Polygons(hv.Box(0, 0, 2).opts(color="black")).opts(color="white")
+        self.PlotDict["All"] = box * hvtext
 
     def list_to_dict(self, rlist):
         return dict(map(lambda s: map(str.strip, s.split(':', 1)), rlist))
@@ -55,8 +62,8 @@ class Van_der_Pauw:
         return self.PlotDict
 
     def sheet_resistance(self, file, fit=False):
-        '''calculates sheet resistance of given file, returns sheet_r and correspondinge standard deviation'''
-        sheet_r = 0
+        '''calculates sheet resistance of given file, returns sheet_r and corresponding standard deviation'''
+
         '''Linear regression'''
         x = self.data[file]["data"]["current"]
         y = self.data[file]["data"]["voltage_vsrc"]
@@ -64,11 +71,10 @@ class Van_der_Pauw:
         line = coef[0] * x + coef[1]
 
         '''calculate sheet Resistance and standard deviation'''
-        sheet_r += coef[0] * np.pi / np.log(2)
+        sheet_r = coef[0] * np.pi / np.log(2)
         variance = cov_matrix[0][0]
         std = np.sqrt(variance) * np.pi / np.log(2)
-        plt.plot(x, y, 'yo', x, line, '--k')
-        #plt.show()
+
         if fit:
             return sheet_r, std, line
         return sheet_r, std
@@ -78,7 +84,7 @@ class Van_der_Pauw:
         labels = ["Batch", "Wafer No.", "HM location", "Test structure"]
         labels.remove(self.sort_parameter)
         innermost_groups = group_df.groupby(labels)
-        r_mean = innermost_groups["Sheet Resistance [Ohm/sq]"].mean() ##calculate the error that happens here
+        r_mean = innermost_groups["Sheet Resistance [Ohm/sq]"].mean()  # list of means each mean corresponds to a bar
 
         '''creates chart data and BarChart Object'''
         keys = ["/".join(key) for key in innermost_groups.groups.keys()]
@@ -102,7 +108,7 @@ class Van_der_Pauw:
             group_mean = r_mean[index]
             for i in group[1]["Sheet Resistance [Ohm/sq]"]:
                 if len(group[1]["Sheet Resistance [Ohm/sq]"]) > 1:
-                    diff_from_mean += ((i - group_mean)**2/(len(group[1]["Sheet Resistance [Ohm/sq]"])-1))
+                    diff_from_mean += ((i - group_mean)**2/(    len(group[1]["Sheet Resistance [Ohm/sq]"])-1))
             diff_from_mean = np.sqrt(diff_from_mean)
             r_mean_error.append(diff_from_mean)
 
@@ -112,7 +118,6 @@ class Van_der_Pauw:
         error_bars = hv.ErrorBars((keys, r_mean, error))
         error_bars.opts(line_width=5)
         chart = chart * error_bars
-        #chart = error_bars
 
         chart.opts(title=substrate + " " + group_name, **self.config["Van_der_Pauw"].get("General", {}),
                    ylim=(0, self.limits[substrate]), xrotation=45)
@@ -136,6 +141,9 @@ class Van_der_Pauw:
         self.filename_df = self.filename_df.append(dic, ignore_index=True)
 
     def create_table(self):
+        self.filename_df["Standard deviation"] = self.filename_df["Standard deviation"].apply(np.format_float_scientific, args=[3])
+        self.filename_df["Sheet Resistance [Ohm/sq]"] = self.filename_df["Sheet Resistance [Ohm/sq]"].apply(np.format_float_scientific, args=[3])
+
         table = hv.Table(self.filename_df)
         table.opts(width=1300, height=800)
         self.PlotDict["All"] = self.PlotDict["All"] + table

@@ -32,6 +32,10 @@ class Contact_Chain:
         self.limits = {"Polysilicon": 4*10**7, "N+": 10**5, "P+": 8 * 10**4}
         self.files_to_fit = self.config["files_to_fit"]
 
+        hvtext = hv.Text(0, 0, self.analysisname, fontsize=20).opts(color="black", xlabel='', ylabel='')
+        box = hv.Polygons(hv.Box(0, 0, 1).opts(color="black")).opts(color="white")
+        self.PlotDict["All"] = box * hvtext
+
     def list_to_dict(self, rlist):
         return dict(map(lambda s: map(str.strip, s.split(':', 1)), rlist))
 
@@ -39,8 +43,8 @@ class Contact_Chain:
         '''turns all headers into dictionaries and fills file_name_df'''
         for file in self.data["keys"]:
             self.data[file]["header"] = self.list_to_dict(self.data[file]["header"])
-            sheet_r, std = self.sheet_resistance(file)
-            self.fill_filename_df(file, sheet_r, std)
+            resistance, std = self.calculate_resistance(file)
+            self.fill_filename_df(file, resistance, std)
         del self.filename_df["_"]
 
         '''groups barcharts by Substrate Type and then by given parameter'''
@@ -54,9 +58,9 @@ class Contact_Chain:
                 self.create_fit(file)
         return self.PlotDict
 
-    def sheet_resistance(self, file, fit=False):
-        '''calculates sheet resistance of given file, returns sheet_r and correspondinge standard deviation'''
-        sheet_r = 0
+    def calculate_resistance(self, file, fit=False):
+        '''calculates sheet resistance of given file, returns resistance and correspondinge standard deviation'''
+        resistance = 0
         '''Linear regression'''
         x = self.data[file]["data"]["current"]
         y = self.data[file]["data"]["voltage_vsrc"]
@@ -64,13 +68,13 @@ class Contact_Chain:
         line = coef[0] * x + coef[1]
 
         '''calculate sheet Resistance and standard deviation'''
-        sheet_r += coef[0]
+        resistance += coef[0]
         variance = cov_matrix[0][0]
         std = np.sqrt(variance)
 
         if fit:
-            return sheet_r, std, line
-        return sheet_r, std
+            return resistance, std, line
+        return resistance, std
 
     def create_barchart(self, group_df, group_name, substrate):
         '''Calculates mean if all labels are equivalent'''
@@ -121,7 +125,7 @@ class Contact_Chain:
         else:
             self.PlotDict["All"] = self.PlotDict["All"] + chart
 
-    def fill_filename_df(self, file, sheet_r, std):
+    def fill_filename_df(self, file, resistance, std):
         '''fills the data frame so data can later be grouped by keyword ("Vendor", "Batch" etc.)'''
         value_list = [key for key in self.data[file]["header"]["sample_name"].split("_")]
         value_list2 = [key for key in self.data[file]["header"]["sample_type"].split("_")]
@@ -130,18 +134,22 @@ class Contact_Chain:
                 value_list = [file, subs] + value_list + value_list2
 
         dic = dict(zip(self.filename_df.keys(), value_list))
-        dic["Resistance"] = sheet_r
+        dic["Resistance"] = resistance
         dic["Standard deviation"] = std
         self.filename_df = self.filename_df.append(dic, ignore_index=True)
 
     def create_table(self):
+        self.filename_df["Standard deviation"] = self.filename_df["Standard deviation"].apply(np.format_float_scientific, args=[3])
+        self.filename_df["Resistance"] = self.filename_df["Resistance"].apply(np.format_float_scientific, args=[3])
+
+
         table = hv.Table(self.filename_df)
         table.opts(width=1300, height=800)
         self.PlotDict["All"] = self.PlotDict["All"] + table
 
     def create_fit(self, filename):
         if filename in self.data["keys"]:
-            sheet_r, std, fit = self.sheet_resistance(filename, fit=True)
+            resistance, std, fit = self.calculate_resistance(filename, fit=True)
             x = self.data[filename]["data"]["current"]
             y = self.data[filename]["data"]["voltage_vsrc"]
             scatter = hv.Scatter((x, y), kdims=self.measurements[1], vdims=self.measurements[2])

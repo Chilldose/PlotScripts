@@ -155,6 +155,9 @@ class Linewidth:
         self.filename_df = self.filename_df.append(dic, ignore_index=True)
 
     def create_table(self):
+        self.filename_df["Standard deviation"] = self.filename_df["Standard deviation"].apply(np.format_float_scientific, args=[3])
+        self.filename_df["Linewidth"] = self.filename_df["Linewidth"].apply(np.format_float_scientific, args=[3])
+
         table = hv.Table(self.filename_df)
         table.opts(width=1300, height=800)
         self.PlotDict["All"] = self.PlotDict["All"] + table

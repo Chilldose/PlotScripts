@@ -1,12 +1,11 @@
 import logging
 import holoviews as hv
 import numpy as np
+from numpy import format_float_scientific as f
 import pandas as pd
 
 
-from forge.PQC_analysis_funktions import plot_flatband_v
 from forge.tools import convert_to_df
-from forge.tools import convert_to_EngUnits
 
 from forge.utilities import line_intersection
 from scipy.interpolate import interp1d
@@ -47,9 +46,8 @@ class MOS_CV:
 
     def derivative_analysis(self):
         for file in self.data["keys"]:
-            '''deletes rows with duplicate in xAxis (prevents division by zero error)'''
-            self.data[file]["data"] = self.data[file]["data"].drop_duplicates(subset=[self.measurements[1]],
-                                                                              keep='first')
+            '''deletes rows with duplicate in xAxis (prevents division by zero error while deriving)'''
+            self.data[file]["data"] = self.data[file]["data"].drop_duplicates(subset=[self.measurements[1]], keep='first')
 
             '''derives and fills df with normal or interpolated data'''
             x, y = list(self.data[file]["data"][self.measurements[1]]), list(self.data[file]["data"][self.measurements[3]])
@@ -72,7 +70,7 @@ class MOS_CV:
         dy[0] = (y[0] - y[1]) / (x[0] - x[1])
         dy[-1] = (y[-1] - y[-2]) / (x[-1] - x[-2])
         for i in range(1, len(y) - 1):
-            dy[i] = (y[i + 1] - y[i - 1]) / (2 *(x[i] - x[i - 1]))
+            dy[i] = (y[i + 1] - y[i - 1]) / (2 * (x[i] - x[i - 1]))
         return list(dy)
 
     @staticmethod
@@ -89,7 +87,7 @@ class MOS_CV:
         self.data[file][name] = {"dataframe": df}
 
     def find_max_der(self, file):
-        '''finds flatbandvoltage (with derivative) and puts it under '''
+        '''finds flatbandvoltage (with derivative) and puts it under [file]["derivative"]["flatband"] '''
         df = self.data[file]["derivative"]["dataframe"]
         df = df[df.dy == df.dy.max()]
         self.data[file]["derivative"]["flatband"] = round(df['x'].iloc[0], 4)
@@ -101,6 +99,7 @@ class MOS_CV:
         self.PlotDict["All"] = self.PlotDict["All"] + curve
 
     def plot_flatband(self, file, ana_type, interpol):
+        '''plot function for both "derivative" and "fit" analysis'''
         x, y = self.data[file][ana_type]["dataframe"]['x'], self.data[file][ana_type]["dataframe"]['y']
         curve = hv.Curve(zip(x, y), kdims=self.measurements[1], vdims=self.measurements[3])
 
@@ -114,7 +113,7 @@ class MOS_CV:
             curve = curve * text * line * self.data[file]["fit"]["lines"][0] * self.data[file]["fit"]["lines"][1]
         curve.opts(**self.config["MOS_CV"].get("General", {}),
                    ylim=(y.min() - 3 * y.min() / 20, y.max() + y.max() / 10))
-        #curve = plot_flatband_v(x, y, "derivative", width=1200, height=800) for testing PQC_analysis_funktions.py
+
         if self.PlotDict["All"] is None:
             self.PlotDict["All"] = curve
         else:
@@ -122,12 +121,10 @@ class MOS_CV:
 
     def fit_analysis(self):
         for file in self.data["keys"]:
-            # deletes rows with duplicate in xAxis (prevents division by zero error)
-            self.data[file]["data"] = self.data[file]["data"].drop_duplicates(subset=[self.measurements[1]],
-                                                                              keep='first')
+            # deletes rows with duplicate in xAxis
+            self.data[file]["data"] = self.data[file]["data"].drop_duplicates(subset=[self.measurements[1]], keep='first')
 
-            x, y = list(self.data[file]["data"][self.measurements[1]]), list(
-                self.data[file]["data"][self.measurements[3]])
+            x, y = list(self.data[file]["data"][self.measurements[1]]), list(self.data[file]["data"][self.measurements[3]])
             if self.interpolation_fit:
                 x, y = self.interpolate(x, y)
             self.fill_df(file, x, y, np.zeros(len(y)), "fit")
@@ -215,7 +212,8 @@ class MOS_CV:
             if self.do_derivative:
                 der_v, N_der = self.data[file]["derivative"]["flatband"], self.data[file]["derivative"]["parameters"]["Nox"]
                 t, phi = self.data[file]["derivative"]["parameters"]["t"], self.data[file]["derivative"]["parameters"]["phi_ms"]
-            dic = {"File": file, "fit_voltage": fit_v, "Nox_fit": N_fit, "der_voltage": der_v, "Nox_der": N_der, "tox [nm]": t * 10**9, "phi_ms": phi}
+            dic = {"File": file, "fit_voltage": fit_v, "Nox_fit": f(N_fit,3), "der_voltage": der_v, "Nox_der": f(N_der,3),
+                   "tox [nm]": t * 10**9, "phi_ms": phi}  #f() --> numpy.format_float_scientific
             df = df.append(dic, ignore_index=True)
         table = hv.Table(df)
         table.opts(width=1300, height=800)

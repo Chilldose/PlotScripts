@@ -108,13 +108,14 @@ class FET:
         else:
             self.PlotDict["All"] = self.PlotDict["All"] + curve
 
-    '''returns voltage and: for Ana 1 fit line, for Ana 2/3 line to show where the voltage is'''
+
     def find_voltage(self, df, x, ana_type):
+        '''returns voltage and: for Ana 1 fit line, for Ana 2/3 line to mark voltage'''
         if ana_type == "Ana 1":
             df = df[df.dy == df.dy.max()]
             inflection_x, inflection_y, slope = df['x'].iloc[0], df['y'].iloc[0], df['dy'].iloc[0]
             d = inflection_y - slope * inflection_x
-            voltage = -d / slope
+            voltage = -d / slope # y = kx + d --> x = (y-d)/k with x = 0
 
             fit_line = [[0, d], [x[-1], x[-1] * slope + d]]
             fit_line = hv.Curve(fit_line).opts(color="red", line_width=1.5)

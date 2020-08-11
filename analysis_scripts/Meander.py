@@ -4,7 +4,6 @@ import logging
 import holoviews as hv
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 
 from forge.tools import convert_to_df
 
@@ -16,8 +15,8 @@ class Meander:
                 data.pop(file)
 
         self.log = logging.getLogger(__name__)
-        #self.data = pd.DataFrame(data)
-        self.data = convert_to_df(data, abs=False) ## funktioniert nicht complett da metal und poly andere messungen haben
+
+        self.data = convert_to_df(data, abs=False) ## funktioniert nicht komplet da metal und poly andere messungen haben
         self.complete_df(data)
 
         self.config = configs
@@ -26,7 +25,7 @@ class Meander:
         self.analysisname = "Meander"
         self.PlotDict = {"Name": self.analysisname}
         self.measurements = self.data["columns"]
-        self.sort_parameter = self.config["Van_der_Pauw"]["Bar_chart"]["CreateBarChart"]
+        self.sort_parameter = self.config["Meander"]["Bar_chart"]["CreateBarChart"]
         self.Substrate_Type = ["Polysilicon", "Metal"]
         self.filename_df = pd.DataFrame(
             columns=["Filename", "Substrate Type", "_", "Batch", "Wafer No.", "_", "HM location",
@@ -34,12 +33,16 @@ class Meander:
         self.PlotDict["All"] = None
         self.limits = {"Polysilicon": 2 * 10**6, "Metal": 450}
         self.files_to_fit = self.config["files_to_fit"]
-        self.squares = {"Polysilicon": 476, "Metal": 12853}
+        self.squares = {"Polysilicon": self.config["Meander"]["parameter"]["squares_poly"], "Metal": self.config["Meander"]["parameter"]["squares_m"]}
+
+        hvtext = hv.Text(0, 0, self.analysisname, fontsize=13).opts(color="black", xlabel='', ylabel='')
+        box = hv.Polygons(hv.Box(0, 0, 2).opts(color="black")).opts(color="white")
+        self.PlotDict["All"] = box * hvtext
 
     def list_to_dict(self, rlist):
         return dict(map(lambda s: map(str.strip, s.split(':', 1)), rlist))
 
-    def complete_df(self,data):
+    def complete_df(self, data):
         '''DataFrame conversion dosent work fully without this, because metal and poly meander have different measurements'''
         for file in self.data["keys"]:
             self.data[file]["data"] = pd.DataFrame(data[file]["data"])
@@ -128,7 +131,6 @@ class Meander:
         error_bars = hv.ErrorBars((keys, r_mean, error))
         error_bars.opts(line_width=5)
         chart = chart * error_bars
-        #chart = error_bars
 
         chart.opts(title=substrate + " " + group_name, **self.config["Van_der_Pauw"].get("General", {}),
                    ylim=(0, self.limits[substrate]), xrotation=45)
@@ -153,6 +155,10 @@ class Meander:
         self.filename_df = self.filename_df.append(dic, ignore_index=True)
 
     def create_table(self):
+        self.filename_df["specific Resistivity [Ohm/sq]"] = self.filename_df["specific Resistivity [Ohm/sq]"].apply(np.format_float_scientific, args=[3])
+        self.filename_df["Resistivity"] = self.filename_df["Resistivity"].apply(np.format_float_scientific, args=[3])
+        self.filename_df["Standard deviation"] = self.filename_df["Standard deviation"].apply(np.format_float_scientific, args=[3])
+
         table = hv.Table(self.filename_df)
         table.opts(width=1300, height=800, title="Squares: Polysilicon: 476, Metal: 12853")
         self.PlotDict["All"] = self.PlotDict["All"] + table
