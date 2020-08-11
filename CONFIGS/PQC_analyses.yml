@@ -53,6 +53,10 @@
     #- FET ?
     # The analysis Plugin over which the data will be run. These plugins must be located in the foler "analysis_scripts"
     
+  files_to_fit:
+    - 2020-07-08T11-51-40_HPK_VPX33234_016_PSSnvir_HM_EE_PQC_Flute_1_Polysilicon_Van-der-Pauw_cross #only the filename WITHOUT .txt also the path has to be given above in 'Files'
+    - 2020-07-08T12-11-22_HPK_VPX33234_016_PSSnvir_HM_EE_PQC_Flute_1_P-stop_Van-der-Pauw_cross
+    - 2020-08-04T09-21-42_HPK_VPX33234_018_PSS_HM-WW_PQCFlutesRight_PQC_Flute_4_Polysilicon_CBKR
    
   Poolsize: 6 # Maximum pool size of simultaneous analysis scripts
 
@@ -109,10 +113,6 @@
     Bar_chart:
           CreateBarChart: Batch #Options are "Batch", "Wafer No." "HM location", "Test structure"
         
-  files_to_fit:
-    - 2020-07-08T11-51-40_HPK_VPX33234_016_PSSnvir_HM_EE_PQC_Flute_1_Polysilicon_Van-der-Pauw_cross #only the filename WITHOUT .txt also the path has to be given above in 'Files'
-    - 2020-07-08T12-11-22_HPK_VPX33234_016_PSSnvir_HM_EE_PQC_Flute_1_P-stop_Van-der-Pauw_cross
-    - 2020-08-04T09-21-42_HPK_VPX33234_018_PSS_HM-WW_PQCFlutesRight_PQC_Flute_4_Polysilicon_CBKR
     
   Meander:
     parameter:

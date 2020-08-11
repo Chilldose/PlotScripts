@@ -28,7 +28,7 @@ class Linewidth:
         self.Substrate_Type = ["P+", "N+", "P-stop"]
         self.filename_df = pd.DataFrame(
             columns=["Filename", "Substrate Type", "_", "Batch", "Wafer No.", "_", "HM location",
-                     "Test structure", "Linewidth", "Standard deviation"])
+                     "Test structure", "Linewidth [um]", "Standard deviation"])
 
         self.limits = {"P+": 0.05, "N+":  0.00001, "P-stop": 0.0005}
         self.files_to_fit = self.config["files_to_fit"]
@@ -98,13 +98,13 @@ class Linewidth:
         labels = ["Batch", "Wafer No.", "HM location", "Test structure"]
         labels.remove(self.sort_parameter)
         innermost_groups = group_df.groupby(labels)
-        r_mean = innermost_groups["Linewidth"].mean() ##calculate the error that happens here
+        r_mean = innermost_groups["Linewidth [um]"].mean() ##calculate the error that happens here
 
         '''creates chart data and BarChart Object'''
         keys = ["/".join(key) for key in innermost_groups.groups.keys()]
         chart_data = [(label, resistance) for label, resistance in zip(keys, r_mean)]
         labels = "/".join(labels)
-        chart = hv.Bars(chart_data, hv.Dimension(labels), "Linewidth")
+        chart = hv.Bars(chart_data, hv.Dimension(labels), "Linewidth [um]")
 
         '''calculates std_mean with error propagation'''
         std_mean_l = []
@@ -120,9 +120,9 @@ class Linewidth:
         for index, group in enumerate(innermost_groups):
             diff_from_mean = 0
             group_mean = r_mean[index]
-            for i in group[1]["Linewidth"]:
-                if len(group[1]["Linewidth"]) > 1:
-                    diff_from_mean += ((i - group_mean)**2/(len(group[1]["Linewidth"])-1))
+            for i in group[1]["Linewidth [um]"]:
+                if len(group[1]["Linewidth [um]"]) > 1:
+                    diff_from_mean += ((i - group_mean)**2/(len(group[1]["Linewidth [um]"])-1))
             diff_from_mean = np.sqrt(diff_from_mean)
             r_mean_error.append(diff_from_mean)
 
@@ -150,13 +150,12 @@ class Linewidth:
                 value_list = [file, subs] + value_list + value_list2
 
         dic = dict(zip(self.filename_df.keys(), value_list))
-        dic["Linewidth"] = Linewidth
+        dic["Linewidth [um]"] = Linewidth * 10**6
         dic["Standard deviation"] = std
         self.filename_df = self.filename_df.append(dic, ignore_index=True)
 
     def create_table(self):
         self.filename_df["Standard deviation"] = self.filename_df["Standard deviation"].apply(np.format_float_scientific, args=[3])
-        self.filename_df["Linewidth"] = self.filename_df["Linewidth"].apply(np.format_float_scientific, args=[3])
 
         table = hv.Table(self.filename_df)
         table.opts(width=1300, height=800)
