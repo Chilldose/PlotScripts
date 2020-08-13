@@ -17,8 +17,16 @@ def linear_fit(x_Values,y_Values, full=False):
     else:
         return line
 
+def Van_der_Pauw(x,y):
+    _, slope, std = linear_fit(x, y, full=True)
+    std = std * np.pi / np.log(2)
+    sheet_r = slope * np.pi / np.log(2)
+    return sheet_r, std
+
 ###############
 '''MOS Flatbadvoltage'''
+'''use plot_flatband_v for holoviews object, use fit_analysis or derivative analysis for voltage'''
+
 def first_derivative(x, y):
     dy = np.zeros(len(y))
     dy[0] = (y[0] - y[1]) / (x[0] - x[1])
@@ -54,6 +62,7 @@ def line_intersection(line1, line2):
 
 def fit_analysis(x,y):
     '''uses fit method'''
+    '''returns list of: Voltage and 2 tupels each containing 2 points (x,y) for the fit lines'''
     RR2 = 0
     fitR2 = 0
     for idx in range(5, len(x) - 5):
@@ -97,6 +106,7 @@ def fit_analysis(x,y):
     # intersect lines and store only the voltage
     flatband_voltage = line_intersection(fit_stats[0], Right_stats[0])[0]
 
+    '''m_start is a tuple containing (x,y) values of the start point of the middle fit line'''
     return [flatband_voltage, (m_start, m_end), (r_start, r_end)]
 
 def plot_flatband_v(x, y, ana_type, **kwargs):
@@ -126,6 +136,7 @@ def plot_flatband_v(x, y, ana_type, **kwargs):
     return curve
 
 def derivative_analysis(x, y):
+    '''returns voltage'''
     dy = first_derivative(x, y)
     df = pd.DataFrame({"x": x, "dy": dy})
     df = df.drop_duplicates(subset='x', keep='first')
@@ -134,6 +145,7 @@ def derivative_analysis(x, y):
 
 ###########################
 '''FET'''
+'''use voltage_FET for Voltage, use plot_FET for holoviews object'''
 
 def plot_FET(x, y, ana_type, **kwargs):
     dy = derivative_wrapper(x, y, ana_type)
@@ -203,6 +215,8 @@ def find_voltage(df, x, ana_type):
         return voltage, line
 
 def voltage_FET(x, y, ana_type):
+    '''takes x,y values and ana_type (either "Ana 1", "Ana 2" or "Ana 3")'''
+    '''returns voltage'''
     dy = derivative_wrapper(x, y, ana_type)
     df = pd.DataFrame({"x": x, "y": y, "dy": dy})
     voltage = find_voltage(df, x, ana_type)
