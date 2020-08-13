@@ -3,7 +3,7 @@ from forge.tools import read_in_ASCII_measurement_files
 
 def myImporter(filepathes, **kwargs):
     '''keys of ana_types get used later to find the correct file !'''
-    ana_types = {"MOS capacitor": [], "FET": [], "Van-der-Pauw": [], "Polysilicon meander": [],
+    ana_types = {"MOS capacitor": [], "FET": [], "Van-der-Pauw": [], "bulk cross": [], "Polysilicon meander": [],
                  "Metal meander": [], "Contact Chain": [], "CBKR": [], "Linewidth": []}
 
     MOS = {'header_lines': 13, 'measurement_description': 14, 'units_line': 14, 'data_start': 15}
@@ -15,7 +15,7 @@ def myImporter(filepathes, **kwargs):
     CBKR = {'header_lines': 11, 'measurement_description': 12, 'units_line': 12, 'data_start': 13}
     Linewidth = {'header_lines': 11, 'measurement_description': 12, 'units_line': 12, 'data_start': 13}
 
-    settings_list = [MOS, FET, Van, Meander_p, Meander_m, chain, CBKR, Linewidth]
+    settings_list = [MOS, FET, Van, Van, Meander_p, Meander_m, chain, CBKR, Linewidth]
     for file in filepathes:
         with open(file, "r") as fp:
             for line in fp:
