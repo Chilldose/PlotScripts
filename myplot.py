@@ -223,10 +223,11 @@ class PlottingMain:
                     ) or "png" in self.config.get("Save_as", []):
                         self.log.info("Export the 'All' plot...")
                         save_plot(
-                            self.config.get("plot_name", ["pippo"]),
+                            plot.get("Name", "All Plots"),
+                            #self.config.get("plot_name", ["pippo"]),
                             plot["All"],
                             save_dir,
-                            save_as=self.config.get("Save_as", ["png"]),
+                            #save_as=self.config.get("Save_as", ["png"]),
                             backend=self.backend,
                         )
                         if progress_queue:
