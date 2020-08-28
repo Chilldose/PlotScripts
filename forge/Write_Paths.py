@@ -1,3 +1,6 @@
+"""Appends the file pathes of all files in the --data_directory path argument to the given --config_path
+configuration file."""
+
 import argparse, yaml, os
 
 parser = argparse.ArgumentParser(description='Adds every path in given folder to given config file')
