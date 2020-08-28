@@ -1,10 +1,15 @@
 import numpy as np
 import holoviews as hv
 import pandas as pd
+import logging
 
 from scipy.interpolate import interp1d
 from scipy.stats import linregress
 from scipy.signal import savgol_filter
+
+log = logging.getLogger(__name__)
+
+"""Analysis function for PQC setup files written by Florentin Huemer during his project thesis at HEPHY 2020"""
 
 def linear_fit(x_Values,y_Values, full=False):
     '''returns array [y_values],slope, standard deviation of slope'''
@@ -52,7 +57,7 @@ def line_intersection(line1, line2):
 
     div = det(xdiff, ydiff)
     if div == 0:
-        print("Lines does not intersect...")
+        log.error("Lines does not intersect...")
         return None
 
     d = (det(*line1), det(*line2))
@@ -119,7 +124,7 @@ def plot_flatband_v(x, y, ana_type, **kwargs):
     elif ana_type == "derivative":
         voltage = derivative_analysis(x, y)
     else:
-        print("ana_type must either be 'derivative' or 'fit'")
+        log.error("ana_type must either be 'derivative' or 'fit'")
         exit(1)
     curve = hv.Curve(zip(x, y), kdims="voltage_hvsrc", vdims="capactiance")
 
