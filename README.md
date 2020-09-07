@@ -179,6 +179,9 @@ If you have CSV styled files you need to include the parameters
 
 <pre>
 CSV_file_specs: # The specifications for the ascii file type measurements files
+  	 measurements:
+      - Measurement 1
+      - Measurement 2
     units:
       - Unit1
       - Unit2
