@@ -1,5 +1,5 @@
 # PlotScripts
- These scripts are for simple plotting of data. It uses the holoviews plotting libraries for plotting. 
+ These scripts are for simple plotting of data. It uses the holoviews plotting libraries for plotting.
 
  # How to use
  First you need to install a Anaconda python 3.x version on your computer. After doing that you can install the conda envrionement by.
@@ -44,7 +44,7 @@ In principle such a file looks like this:
   # If None is passed, the script tries to read in the files based on their file suffix. .txt, .dat, will be interpreted as ASCII
 
   Output: myplot #Output folder path for my plots
-  
+
   backend: bokeh # Choose the backend for the plotting. Warning: Output may change with different backends. Possible options: bokeh, matplotlib, plotly
 
   Save_as: # save the plots in different data formats, if more than one is specified all of them will be plotted
@@ -53,7 +53,7 @@ In principle such a file looks like this:
     - svg
     - xml # Only works if the entry "xml_template_path" points to a correct template!
     - json
-    
+
   xml_template_path: ".\\CONFIGS\\CMSxmlTemplate.yml" # Path to the XML template config file
 
   Analysis:
@@ -67,7 +67,7 @@ In principle such a file looks like this:
     measurement_description: 9 # The line the measurements/column names are stated
     units_line: 9 # The line the units for each measurement name are stated (can be the same as measurement_desciption)
     data_start: 10 # The line the data starts
-    
+
   # If CUSTOM was choosen in 'Filetype', then you must define this custom specs section to tell where to find the file etc
   Custom_specs: # Optional: Only needed if you have a custom importer --> As a Filetype the entry CUSTOM has to be passed!
     path: <path_to_your_python_file> # The path to your python file where the custom importer is
@@ -152,7 +152,7 @@ specified in the 'parameters' entry in the Custom_specs section. If you do not n
 entry in your config.
 
 After parsing your data, the framework wants as a return a dict. The top level keys must be a kind of representation of your files (I use the filename).
-The values to this keys are again dicts with keys beeing the columns/data sets inside like voltage, capacitance etc. As values it can be any iterable object. But I would recommend a list or a numpy array. An example for a custom importer is included in the repo! 
+The values to this keys are again dicts with keys beeing the columns/data sets inside like voltage, capacitance etc. As values it can be any iterable object. But I would recommend a list or a numpy array. An example for a custom importer is included in the repo!
 
 # Plotting backend
 PlotScripts is build on holoviews, and can plot with different plotting backends. The standard backend is bokeh. But you can choose another backend if you want with the parameter "backend". The options are bokeh, matplotlib and plotly.
@@ -205,7 +205,7 @@ ASCII_file_specs: # The specifications for the ascii file type measurements file
     measurement_description: 20
     units_line: 21
     data_start: 22
-    
+
     data_separator: ";"
     measurement_regex: ""
     units_regex: ""
@@ -219,7 +219,7 @@ ASCII_file_specs: # The specifications for the ascii file type measurements file
 
 + data_separator: Define your own data separator if the data is not separated by a whitespace character
 + measurement_regex: If the build in measurement regex, does not yield the correct measurements, here you can define your own regex for that
-+ units_regex: If the build in units regex, does not yield the correct measurements, here you can define your own regex for that
++ units_regex: If the build in units regex, does not yield the correct units, here you can define your own regex for that
 + measurements: Define a list of measurement names, which describe your data (you can use this if the regex totally fails or if you do not have such a header.)
 + units: Define a list of units, which describe your data (you can use this if the regex totally fails or if you do not have such a header.)
 
@@ -263,11 +263,32 @@ Pad                     Istrip                  Rpoly                   Idark   
 
 
 # XML template
-This shows the principal XML template structure.
+Here the principal XML template structure will be explained. The template needs at least the entry "Template" and it must be a dict.
+After that you can write the principal structure for the xml file as a yml representation.
+
 All values enclosed by <...> are the search parameter the script is searching for in the header.
-All that is enclosed in //...// is a clonable template entry. A corresponding template must be present in the config
-All that is enclosed by "[...]" is a external script call. The entry must be present in the config file.
-An additional entry for a regex, to parse the output can be stated.
+Example:
+    XML template: LOCATION: <Location>
+    Header: Locaction: HEPHY
+    xml file output: <LOCATION>HEPHY</LOCATION>
+
+All that is enclosed in //...// is a cloneable template entry. A corresponding template must be present in the config
+
+As seen in the config file the template can be structured as
+```xml
+DATA_DUMP_template:
+  Idark:
+      STRIP: <Pad>
+      CURRNT_NAMPR: <Istrip>
+      TEMP_DEGC: <Temperature>
+      RH_PRCNT: <Humidity>
+      BIASCURRNT_NAMPR: <Idark>
+```
+everything enclosed in <...> are the column names from the file.  Inserted in the final file will then be the iterator values for this meausrement
+
+All that is enclosed by "[...]" is a external script call. The key enclosed must have a matching key in the top level level of the yaml file.
+As a value must be a pointer to a valid python file which will then be executed. The output is captured and the inserted as a value into the final xml.
+If the output must be parsed, the same key with the prefix "_regex" can also be added. This regex will then be used to parse the output, and set as value in the xml, eventually.
 
 ```xml
 
@@ -318,8 +339,7 @@ An additional entry for a regex, to parse the output can be stated.
         BIASCURRNT_NAMPR: <Idark>
 ```
 
-
-The output as XML for the stated file and this xml template will output:
+The xml template stated here will output a XML for the given file above and this xml template will read:
 
 ```xml
 <?xml version="1.0" ?>
@@ -375,7 +395,6 @@ The output as XML for the stated file and this xml template will output:
 			<BIASCURRNT_NAMPR>229.96466952918124</BIASCURRNT_NAMPR>
 		</DATA>
 ```
-
 
 # The measurement plugins
 The measurement plugins located in the analysis_scripts folder need to be python classes.
