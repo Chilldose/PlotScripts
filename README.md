@@ -270,6 +270,7 @@ All that is enclosed by "[...]" is a external script call. The entry must be pre
 An additional entry for a regex, to parse the output can be stated.
 
 <pre>
+<div>
 ---
   Settings_name: CMSxmlTemplate
 
@@ -315,12 +316,14 @@ An additional entry for a regex, to parse the output can be stated.
         TEMP_DEGC: <Temperature>
         RH_PRCNT: <Humidity>
         BIASCURRNT_NAMPR: <Idark>
+</div>
 </pre>
 
 
 The output as XML for the stated file and this xml template will output:
 
 <pre>
+<div>
 <?xml version="1.0" ?>
 <root>
 	<HEADER>
@@ -373,6 +376,7 @@ The output as XML for the stated file and this xml template will output:
 			<RH_PRCNT>24.100000381469727</RH_PRCNT>
 			<BIASCURRNT_NAMPR>229.96466952918124</BIASCURRNT_NAMPR>
 		</DATA>
+</div>
 </pre>
 
 
