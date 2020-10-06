@@ -263,18 +263,18 @@ Pad                     Istrip                  Rpoly                   Idark   
 
 
 # XML template
-Here the principal XML template structure will be explained. The template needs at least the entry "Template" and it must be a dict.
-After that you can write the principal structure for the xml file as a yml representation.
+Here the principal XML template structure will be explained. The template needs at least the entry "Template" and it must be a dict.\
+After that you can write the principal structure for the xml file as a yml representation.\
 
-All values enclosed by <...> are the search parameter the script is searching for in the header.
-Example:
-    XML template: LOCATION: <Location>
-    Header: Locaction: HEPHY
-    xml file output: <LOCATION>HEPHY</LOCATION>
+All values enclosed by <...> are the search parameter the script is searching for in the header.\
+Example:\
+    XML template: LOCATION: <Location>\
+    Header: Locaction: HEPHY\
+    xml file output: <LOCATION>HEPHY</LOCATION>\
 
-All that is enclosed in //...// is a cloneable template entry. A corresponding template must be present in the config
+All that is enclosed in //...// is a cloneable template entry. A corresponding template must be present in the config\
 
-As seen in the config file the template can be structured as
+As seen in the config file the template can be structured as\
 ```xml
 DATA_DUMP_template:
   Idark:
