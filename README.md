@@ -62,6 +62,9 @@ In principle such a file looks like this:
     - html
     - png
     - svg
+    - xml
+    
+  xml_template_path: ".\\CONFIGS\\CMSxmlTemplate.yml" # Path to the XML template config file
 
   Analysis:
     - myAnalysisPlugin # The analysis Plugin over which the data will be run. These plugins must be located in the foler "analysis_scripts"
@@ -329,3 +332,59 @@ The most important functions are:
 + forge.tools.plot_all_measurements - These function plots you all measurements
 + forge.tools.convert_to_EngUnits - Converts the df entries to the specified order of magnitude
 + forge.specialPlots.dospecialPlots - These function plots you all measurements, in the desired special plot style
+
+
+# XML template
+This shows the principal XML template structure.
+All values enclosed by <...> are the search parameter the script is searching for in the header.
+All that is enclosed in //...// is a clonable template entry. A corresponding template must be present in the config
+All that is enclosed by "[...]" is a external script call. The entry must be present in the config file.
+An additional entry for a regex, to parse the output can be stated.
+
+<pre>
+---
+  Settings_name: CMSxmlTemplate
+
+  DB_uploader_API_module: "C:\\GitRepos\\cmsdbldr\\DB_loader.py" # The directory, where the db uploader is located
+  DB_downloader_API_module: "C:\\GitRepos\\cmsdbldr\\DB_grap.py --param some_params" # The directory, where the db downloader is located
+  DB_downloader_API_module_regex: "RUN\\s+NUMBER\\s+(.*)"
+
+  Template:
+    HEADER:
+      TYPE:
+        EXTENSION_TABLE_NAME: <EXTENSION_TABLE_NAME>
+        NAME: <NAME>
+      RUN:
+        RUN_TYPE: <Project> # Mandatory: ??? > IS Test Measurement
+        RUN_NUMBER: "[DB_downloader_API_module]"
+        LOCATION: <Location> # HEPHY
+        INITIATED_BY_USER: <Operator> # The Operator of this measurement
+        RUN_BEGIN_TIMESTAMP: <Date> # Optional but good to have
+        RUN_END_TIMESTAMP: <ENDTIME> # Optional
+        COMMENT_DESCRIPTION: <Comment> # Optional
+    DATA_SET:
+      COMMENT_DESCRIPTION: <DATA_COMMENT> # Optional
+      VERSION: <VERSION> # The data version? How many times I started the measurement?
+      PART:
+        KIND_OF_PART: <Sensor Type> # Hamamatsu 2S Sensor
+        BARCODE: <ID> # HPK_VPX28441_1002_2S
+      DATA: //DATA_DUMP_template//
+
+  File_specific_header:
+    Istrip:
+        HEADER:
+            TYPE:
+                EXTENSION_TABLE_NAME: TEST_SENSOR_IS
+                NAME: TrackerStrip-Sensor IS Test
+            RUN:
+                RUN_TYPE: IS Test Measurements
+
+
+  DATA_DUMP_template:
+    Idar:
+        STRIP: <Pad>
+        CURRNT_NAMPR: <Istrip>
+        TEMP_DEGC: <Temperature>
+        RH_PRCNT: <Humidity>
+        BIASCURRNT_NAMPR: <Idark>
+</pre>
